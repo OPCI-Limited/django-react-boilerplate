@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios';
 import React, { useEffect, useState } from 'react';
+import 'bootstrap/dist/css/bootstrap.css';
 // import { useParams } from 'react-router-dom'
 
 import { api } from '../../services/api';

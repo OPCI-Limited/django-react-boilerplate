@@ -1,4 +1,5 @@
 import React, { FormEvent, useContext, useEffect, useState } from 'react';
+import 'bootstrap/dist/css/bootstrap.css';
 import { Container, Row, Col, Button, Form, Card } from 'react-bootstrap';
 
 

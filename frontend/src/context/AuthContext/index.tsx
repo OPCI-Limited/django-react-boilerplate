@@ -1,11 +1,12 @@
 import React, { createContext, ReactNode, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import 'bootstrap/dist/css/bootstrap.css';
 import { api } from '../../services/api';
 import { setAuthorizationHeader } from '../../services/interceptors';
 import { createTokenCookies, getToken, removeTokenCookies } from '../../utils/tokenCookies';
 import { User } from '../../interfaces';
+
 
 interface SignInCredentials {
   email: string
@@ -42,6 +43,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const token = getToken();
   const isAuthenticated = Boolean(token);
   const userData = user as User;
+
+  if (token){
+    localStorage.setItem('accessToken', token);
+  }
 
   async function setUserData() {
     setLoadingUserData(true);

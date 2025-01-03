@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'storages',
+    'event',
 ]
 
 MIDDLEWARE = [
@@ -235,3 +236,10 @@ if USE_AZURE_STORAGE:
 
 print('USE_AZURE_STATIC_STORAGE', USE_AZURE_STORAGE)
 print('STORAGES', STORAGES)
+
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+
+

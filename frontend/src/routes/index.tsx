@@ -16,6 +16,7 @@ import { Users } from '../pages/Users';
 import { Profile } from '../pages/Profile';
 import { PrivateRoute } from './PrivateRoute';
 import { PublicRoute } from './PublicRoute';
+import Calendar from '../components/Calendar';
 
 export const RouteList = () => (
   <>
@@ -25,6 +26,14 @@ export const RouteList = () => (
         element={
           <PrivateRoute redirectTo="/login">
             <Home/>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/calendar"
+        element={
+          <PrivateRoute redirectTo="/login">
+            <Calendar/>
           </PrivateRoute>
         }
       />
