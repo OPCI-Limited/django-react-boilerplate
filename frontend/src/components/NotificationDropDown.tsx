@@ -30,11 +30,11 @@ export const NotificationsDropdown: React.FC = () => {
             <li className="p-2 text-sm text-gray-500">No notifications</li>
           )}
         </ul>
-        <div className="p-2 text-center text-sm font-medium border-t">
+        {/* <div className="p-2 text-center text-sm font-medium border-t">
           <a href="/notifications" className="text-blue-500 hover:underline">
             View All
           </a>
-        </div>
+        </div> */}
       </div>
     </div>
   );

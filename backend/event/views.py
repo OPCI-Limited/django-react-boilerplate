@@ -140,21 +140,18 @@ class InviteeViewSet(viewsets.ModelViewSet):
                         errors.append({"email": email, "error": "Each invitee must have 'event' and 'email'"})
                         continue
 
-                    # Retrieve the Event object
                     try:
                         event = Event.objects.get(id=event_id)
                     except Event.DoesNotExist:
                         errors.append({"email": email, "error": f"Event with ID {event_id} does not exist"})
                         continue
 
-                    # Retrieve the User object
                     try:
                         user = User.objects.get(email=email)
                     except User.DoesNotExist:
                         errors.append({"email": email, "error": "User with this email does not exist"})
                         continue
 
-                    # Populate invitee fields
                     invitee = Invitee(
                         event=event,
                         email=email,
@@ -193,7 +190,6 @@ class InviteeEventViewSet(viewsets.ReadOnlyModelViewSet):
         if not user_id:
             return Response({"error": "user_id query parameter is required."}, status=400)
 
-        # Filter records by user_id
         records = InviteeEventView.objects.filter(user_id=user_id).order_by('-start_date')
         serializer = self.get_serializer(records, many=True)
         return Response(serializer.data)
@@ -208,11 +204,9 @@ class InviteeEventViewSet(viewsets.ReadOnlyModelViewSet):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
-        # Validate user_id is provided
         if not user_id:
             return Response({"error": "user_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Build the filter conditions
         filters = Q(user_id=user_id)
 
         if rsvp_status:
@@ -221,7 +215,6 @@ class InviteeEventViewSet(viewsets.ReadOnlyModelViewSet):
         if start_date and end_date:
             filters &= Q(start_date__gte=start_date) & Q(end_date__lte=end_date)
 
-        # Retrieve and serialize the filtered data
         try:
             records = InviteeEventView.objects.filter(filters).order_by('-start_date')
             serializer = self.get_serializer(records, many=True)
@@ -235,36 +228,44 @@ class InviteeEventViewSet(viewsets.ReadOnlyModelViewSet):
         Filter and sort invitee-event records by user_id and sorting criteria.
         """
         user_id = request.query_params.get("user_id")
-        sort_by = request.query_params.get("sort_by", "none")
+        sort_by = request.query_params.get("sort_by", "startDate")  
+        order = request.query_params.get("order", "desc")  
 
         if not user_id:
             return Response({"error": "user_id query parameter is required."}, status=400)
 
-        # Filter records by user_id
+     
         queryset = InviteeEventView.objects.filter(user_id=user_id)
 
-        # Apply sorting based on the `sort_by` parameter
+        
+        sort_field = ""
         if sort_by == "startDate":
-            queryset = queryset.order_by("start_date")
+            sort_field = "start_date" if order == "asc" else "-start_date"
         elif sort_by == "hostName":
-            queryset = queryset.order_by("host_name")
+            sort_field = "host_email" if order == "asc" else "-host_email"
+
+     
+        queryset = queryset.order_by(sort_field)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def by_event(self, request):
 
-        event_id = request.query_params.get('event_id')
+        
+        @action(detail=False, methods=['get'])
+        def by_event(self, request):
 
-        if not event_id:
-            return Response({"error": "event_id query parameter is required."}, status=400)
+            event_id = request.query_params.get('event_id')
 
-        # Filter records by event_id
-        records = InviteeEventView.objects.filter(event_id=event_id).order_by('-start_date')
-        serializer = self.get_serializer(records, many=True)
-        return Response(serializer.data)
-    
+            if not event_id:
+                return Response({"error": "event_id query parameter is required."}, status=400)
+
+       
+            records = InviteeEventView.objects.filter(event_id=event_id).order_by('-start_date')
+            serializer = self.get_serializer(records, many=True)
+            return Response(serializer.data)
+        
+
+
 class NotificationListView(APIView):
     # permission_classes = [IsAuthenticated]
 

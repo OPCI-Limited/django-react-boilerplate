@@ -7,12 +7,12 @@ class Command(BaseCommand):
     help = "Notify users about upcoming events within 24 hours"
 
     def handle(self, *args, **options):
-        # Logic to find upcoming events
+        # find upcoming events
         upcoming_threshold = now() + timedelta(hours=24)
         events = Event.objects.filter(start_date__lte=upcoming_threshold, start_date__gte=now())
 
         for event in events:
-            # Send notification (replace with your implementation)
+            # Send notification, but still needs a job to run
             Notification.objects.create(
                 user=event.created_by,
                 message=f"Reminder: Your event '{event.title}' is starting soon!",

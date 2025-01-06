@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { setAuthorizationHeader } from '../../services/interceptors';
 import { createTokenCookies, getToken, removeTokenCookies } from '../../utils/tokenCookies';
 import { User } from '../../interfaces';
+import { useNotifications } from '../Notification';
 
 
 interface SignInCredentials {
@@ -35,6 +36,14 @@ interface AuthProviderProps {
 }
 
 export const AuthContext = createContext({} as AuthContextData);
+
+export const useAuth = (): AuthContextData => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>();
@@ -98,6 +107,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthorizationHeader(api.defaults, access);
       // get user data after successful login to set user state
       await setUserData();
+      const { fetchUnreadNotifications } = useNotifications();
+      await fetchUnreadNotifications();
 
     } catch (error) {
       const err = error as AxiosError;

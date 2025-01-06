@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Notification } from '../interfaces/notification.model';
 import { notificationService } from '../services/notification.service';
+import { useAuth } from './AuthContext';
 
 interface NotificationsContextValue {
   notifications: Notification[];
@@ -12,15 +13,18 @@ interface NotificationsContextValue {
 const NotificationsContext = createContext<NotificationsContextValue | undefined>(undefined);
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loadingUserData } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const fetchNotifications = async () => {
+    if (!isAuthenticated) return;
     const data = await notificationService.getNotifications();
     // console.log(data);
     // setNotifications(data);
   };
 
   const fetchUnreadNotifications = async () => {
+    if (!isAuthenticated) return;
     const data = await notificationService.getUnreadNotifications();
     // console.log(data);
     setNotifications(data);
@@ -34,7 +38,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     fetchUnreadNotifications();
     // fetchNotifications();
-  }, []);
+  }, [isAuthenticated, loadingUserData]);
 
   return (
     <NotificationsContext.Provider value={{ notifications, fetchUnreadNotifications, fetchNotifications, markAsRead }}>

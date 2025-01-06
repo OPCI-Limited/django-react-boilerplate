@@ -65,14 +65,14 @@ export const Home: React.FC = () => {
   const add24Hours = (date: Date | null): Date | null => {
     if (!date) return null;
     const newDate = new Date(date);
-    newDate.setTime(newDate.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours in milliseconds
+    newDate.setTime(newDate.getTime() + 24 * 60 * 60 * 1000); 
     return newDate;
   };
     
   //   const addNoHours = (date: Date | null): Date | null => {
   //     if (!date) return null;
   //     const newDate = new Date(date);
-  //     newDate.setTime(newDate.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours in milliseconds
+  //     newDate.setTime(newDate.getTime() + 24 * 60 * 60 * 1000); 
   //     return newDate;
   //   };
   const handleSearchResults = (results: Event[]) => {
@@ -90,7 +90,7 @@ export const Home: React.FC = () => {
       const { dateRange, rsvpStatus } = filters;
       const startDate = dateRange[0]?.toISOString().split("T")[0] || undefined;
       const endDate = dateRange[1]?.toISOString().split("T")[0] || undefined;
-      // Add 24 hours to the end date
+      // adding 24 hours to the end date
       const adjustedEndDate = filters.dateRange[1]
         ? add24Hours(filters.dateRange[1])?.toISOString()
         : undefined;
@@ -119,18 +119,18 @@ export const Home: React.FC = () => {
   const fetchWidgetData = async () => {
     // const userId = localStorage.getItem("userId"); 
 
-    // Fetch Hosted Events Count
+   
     const hostedEvents = await inviteeEventViewService.getByUserId(Number(userId));
     // console.log(hostedEvents.length)
     setHostedEventsCount(hostedEvents.filter(e => e.event_created_by === Number(userId)).length);
 
-    // Fetch Upcoming Events Count
+    // count upcoming events 
     const upcomingEvents = hostedEvents.filter(e => 
       e.rsvp_status === "accepted" && new Date(e.start_date) > new Date()
     );
     setUpcomingEventsCount(upcomingEvents.length);
 
-    // Fetch Pending Events
+    // pending events
     const pending = hostedEvents.filter(e => e.rsvp_status === "pending" && new Date(e.start_date) > new Date());
     setPendingEvents(pending);
   };
@@ -149,7 +149,7 @@ export const Home: React.FC = () => {
 
   const handleEventFormClose = () => {
     setEventFormOpen(false);
-    setCurrentEvent(new Event()); // Reset the form
+    setCurrentEvent(new Event()); 
   };
 
 
@@ -163,11 +163,11 @@ export const Home: React.FC = () => {
       }
       let createdEvent: Event;
       if (currentEvent?.id) {
-      // Update event
+      // update event
         await eventService.updateEvent(currentEvent.id, currentEvent);
       } else {
         console.log(currentEvent);
-        // Create event
+        // create event
         if (!userId) {
           console.error("No current user");
           return;
@@ -186,7 +186,7 @@ export const Home: React.FC = () => {
   };
 
   const handleCreateClick = () => {
-    setCurrentEvent(new Event()); // Clear the form
+    setCurrentEvent(new Event());
     setEventFormOpen(true);
   };
 
@@ -200,8 +200,8 @@ export const Home: React.FC = () => {
     eventToEdit.end_date = event.end_date;
     eventToEdit.created_by = event.event_created_by;
 
-    setCurrentEvent(eventToEdit); // Set the selected event for editing
-    setEventFormOpen(true); // Open the form
+    setCurrentEvent(eventToEdit);
+    setEventFormOpen(true); 
   };
 
   const handleViewClick = (event: any) => {
@@ -222,8 +222,8 @@ export const Home: React.FC = () => {
     setViewModalOpen(false); 
   };    
   const handleInviteClick = (eventId: number) => {
-    setCurrentEventId(eventId); // Store the selected event ID
-    setInviteModalOpen(true); // Open the Invite modal
+    setCurrentEventId(eventId); 
+    setInviteModalOpen(true); 
   };
 
   const handleDeleteEvent = async () => {
@@ -232,8 +232,8 @@ export const Home: React.FC = () => {
         await eventService.deleteEvent(currentEventId);
         await fetchAndGroupEvents();
         await fetchWidgetData();
-        setConfirmationOpen(false); // Close confirmation popup
-        setCurrentEvent(null); // Reset current event
+        setConfirmationOpen(false);
+        setCurrentEvent(null);
       }
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -258,7 +258,7 @@ export const Home: React.FC = () => {
     setFilters(filters);
   };
 
-  const fetchFilteredAndSortedEvents = async (userId: number, sortBy: string): Promise<void> => {
+  const fetchFilteredAndSortedEvents = async (userId: number, sortBy: string,): Promise<void> => {
     try {
       const events = await inviteeEventViewService.getFilteredSortedEvents(userId, sortBy);
       setEvents(events);
@@ -349,7 +349,7 @@ export const Home: React.FC = () => {
         </main>
       </div>
 
-      {/* Popup for Event Form */}
+      {/* popup for event creation form */}
       <Popup open={eventFormOpen} closeOnDocumentClick onClose={handleEventFormClose} modal>
         <div className="w-full px-6 py-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
@@ -363,7 +363,7 @@ export const Home: React.FC = () => {
         </div>
       </Popup>
 
-      {/* Popup for View */}
+      {/* popup to view event */}
       <Popup
         open={viewModalOpen}
         closeOnDocumentClick
@@ -375,7 +375,7 @@ export const Home: React.FC = () => {
           <EventInfo event={currentEvent2 || new InviteeEventView()} onClose={handleClose} />
         </div>
       </Popup>
-      {/* Invite Modal */}
+      {/* popup for inviting users */}
       <Popup open={inviteModalOpen} closeOnDocumentClick onClose={() => setInviteModalOpen(false)} modal>
         <div className="w-full px-6 py-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Invite Users</h2>
@@ -384,7 +384,7 @@ export const Home: React.FC = () => {
       </Popup>
 
 
-      {/* Confirmation Modal */}
+      {/* deletion confirmation pop up */}
       <Popup
         open={confirmationOpen}
         closeOnDocumentClick

@@ -65,7 +65,7 @@ class InviteeEventViewService {
   }
 
   async getFilteredSortedEvents(userId: number, sortBy: string): Promise<InviteeEventView[]> {
-    const response = await axios.get<InviteeEventView[]>(`${BASE_URL}invitee_event_view/filtered_sorted/`, {
+    const response = await axios.get<InviteeEventView[]>(`${BASE_URL}filtered_sorted/`, {
       params: { user_id: userId, sort_by: sortBy },
       headers: getAuthHeaders(),
     });
