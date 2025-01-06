@@ -43,6 +43,9 @@ export const Home: React.FC = () => {
   const [pendingEvents, setPendingEvents] = useState<InviteeEventView[]>([]);
   const { userId } = useContext(AuthContext);
   const [searchResults, setSearchResults] = useState<InviteeEventView[]>([]);
+  const [sortBy, setSortBy] = useState<string>("startDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   
   // const [filters, setFilters] = useState<{ dateRange: [Date | null, Date | null]; rsvpStatus: string }>({
   //     dateRange: [null, null],
@@ -277,6 +280,39 @@ export const Home: React.FC = () => {
   };
 
 
+  const sortEvents = (criteria: string) => {
+    const nextOrder = sortBy === criteria && sortOrder === "asc" ? "desc" : "asc";
+    setSortBy(criteria);
+    setSortOrder(nextOrder);
+  
+    const sortedEvents = [...events].sort((a, b) => {
+      if (criteria === "startDate") {
+        return nextOrder === "asc"
+          ? new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+          : new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+      }
+      if (criteria === "hostName") {
+        return nextOrder === "asc"
+          ? a.host_email.localeCompare(b.host_email)
+          : b.host_email.localeCompare(a.host_email);
+      }
+      return 0;
+    });
+  
+    // Update groupedEvents after sorting
+    const grouped = sortedEvents.reduce((acc: Record<string, InviteeEventView[]>, event) => {
+      const longDate = moment(event.start_date).format("dddd, MMMM Do YYYY");
+      if (!acc[longDate]) acc[longDate] = [];
+      acc[longDate].push(event);
+      return acc;
+    }, {});
+  
+    setEvents(sortedEvents);
+    setGroupedEvents(grouped);
+  };
+  
+
+
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -314,19 +350,15 @@ export const Home: React.FC = () => {
                 </button>
 
                 <DropdownFilter
-                  onApply={(sortBy) => {
-                    if (!userId) {
-                      console.error("No current user");
-                      return;
-                    }
-                    fetchFilteredAndSortedEvents(userId, sortBy); // Pass both userId and selected sortBy
+                  onApply={(criteria) => {
+                    sortEvents(criteria); // Apply local sorting
                   }}
                   align="right"
                 />
                 <PopoverDemo onFilterApply ={handleFilterApply} align="left" />
                 <button
                   onClick={handleCreateClick}
-                  className="text-white bg-[#050708] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2"
+                  className="text-white bg-[#050708] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2"
                 >
                   <svg
                     className="fill-current shrink-0 xs:hidden block md:hidden"
