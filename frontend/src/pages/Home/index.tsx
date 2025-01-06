@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useContext } from "react";
 import DropdownFilter from "../../components/DropdownFilter";
 import PopoverDemo from "../../components/Filter";
 import DashboardCard01 from "../../widgets/Widget1";
 import DashboardCard02 from "../../widgets/Widget3";
 import DashboardCard03 from "../../widgets/Widget2";
-// import ModalSearch from "src/component/ModalSearch";
+import ModalSearch from "../../components/ModalSearch";
 import EventForm from "../../components/EventForm";
 import Popup from "reactjs-popup";
-import jwtDecode from "jwt-decode";
 import { eventService } from "../../services/event.service";
 import { Event } from "../../interfaces/Event.model";
 import { inviteeEventViewService } from '../../services/InviteeEventViewService';
@@ -20,13 +19,10 @@ import Invite from "../../components/Invite";
 import EventInfo from "../../components/EventInfo";
 import Confirmation from "../../components/Confirmation";
 import DashboardCard04 from "../../widgets/Widget4";
+import { AuthContext } from '../../context/AuthContext'
 
 
-interface DecodedToken {
-  user_id: number;
-  exp: number;
-  iat: number;
-}
+
 
 
 export const Home: React.FC = () => {
@@ -34,6 +30,7 @@ export const Home: React.FC = () => {
   const [eventFormOpen, setEventFormOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [events, setEvents] = useState<InviteeEventView[]>([]);
+  const [events2, setEvents2] = useState<Event[]>([]);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<number | null>(null);
   const [newEvent, setNewEvent] = useState<Event>(new Event());
@@ -44,6 +41,9 @@ export const Home: React.FC = () => {
   const [hostedEventsCount, setHostedEventsCount] = useState(0);
   const [upcomingEventsCount, setUpcomingEventsCount] = useState(0);
   const [pendingEvents, setPendingEvents] = useState<InviteeEventView[]>([]);
+  const { userId } = useContext(AuthContext);
+  const [searchResults, setSearchResults] = useState<InviteeEventView[]>([]);
+  
   // const [filters, setFilters] = useState<{ dateRange: [Date | null, Date | null]; rsvpStatus: string }>({
   //     dateRange: [null, null],
   //     rsvpStatus: "",
@@ -75,13 +75,18 @@ export const Home: React.FC = () => {
   //     newDate.setTime(newDate.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours in milliseconds
   //     return newDate;
   //   };
+  const handleSearchResults = (results: Event[]) => {
+    // setSearchResults(results);
+    setEvents2(results); 
+  };
     
   const fetchAndGroupEvents = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
-      const userId = jwtDecode<DecodedToken>(token).user_id;
+      if (!userId) {
+        console.error("No current user");
+        return;
+      }
+      // console.log(userId);
       const { dateRange, rsvpStatus } = filters;
       const startDate = dateRange[0]?.toISOString().split("T")[0] || undefined;
       const endDate = dateRange[1]?.toISOString().split("T")[0] || undefined;
@@ -111,28 +116,33 @@ export const Home: React.FC = () => {
     }
   };
 
+  const fetchWidgetData = async () => {
+    // const userId = localStorage.getItem("userId"); 
+
+    // Fetch Hosted Events Count
+    const hostedEvents = await inviteeEventViewService.getByUserId(Number(userId));
+    // console.log(hostedEvents.length)
+    setHostedEventsCount(hostedEvents.filter(e => e.event_created_by === Number(userId)).length);
+
+    // Fetch Upcoming Events Count
+    const upcomingEvents = hostedEvents.filter(e => 
+      e.rsvp_status === "accepted" && new Date(e.start_date) > new Date()
+    );
+    setUpcomingEventsCount(upcomingEvents.length);
+
+    // Fetch Pending Events
+    const pending = hostedEvents.filter(e => e.rsvp_status === "pending" && new Date(e.start_date) > new Date());
+    setPendingEvents(pending);
+  };
+
+
   useEffect(() => {
-    fetchAndGroupEvents();
-    const fetchWidgetData = async () => {
-      const userId = localStorage.getItem("userId"); // Get logged-in user's ID
-
-      // Fetch Hosted Events Count
-      const hostedEvents = await inviteeEventViewService.getByUserId(Number(userId));
-      setHostedEventsCount(hostedEvents.filter(e => e.event_created_by === Number(userId)).length);
-
-      // Fetch Upcoming Events Count
-      const upcomingEvents = hostedEvents.filter(e => 
-        e.rsvp_status === "accepted" && new Date(e.start_date) > new Date()
-      );
-      setUpcomingEventsCount(upcomingEvents.length);
-
-      // Fetch Pending Events
-      const pending = hostedEvents.filter(e => e.rsvp_status === "pending");
-      setPendingEvents(pending);
-    };
-
-    fetchWidgetData();
-  }, [filters]);
+    if (userId) {
+      fetchAndGroupEvents();
+      
+      fetchWidgetData();
+    }
+  }, [userId, filters]);
 
 
 
@@ -156,16 +166,19 @@ export const Home: React.FC = () => {
       // Update event
         await eventService.updateEvent(currentEvent.id, currentEvent);
       } else {
-      // Create event
-        const token = localStorage.getItem("accessToken");
-        if (!token) throw new Error("No access token found");
-        const userId = jwtDecode<DecodedToken>(token).user_id;
+        console.log(currentEvent);
+        // Create event
+        if (!userId) {
+          console.error("No current user");
+          return;
+        }
         createdEvent = await eventService.createEvent(currentEvent, userId);
         setCurrentEventId(createdEvent.id); // Store the new event ID for invite
         setInviteModalOpen(true);
       }
 
       await fetchAndGroupEvents();
+      await fetchWidgetData();
       handleEventFormClose();
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -218,6 +231,7 @@ export const Home: React.FC = () => {
       if (currentEventId) {
         await eventService.deleteEvent(currentEventId);
         await fetchAndGroupEvents();
+        await fetchWidgetData();
         setConfirmationOpen(false); // Close confirmation popup
         setCurrentEvent(null); // Reset current event
       }
@@ -277,34 +291,54 @@ export const Home: React.FC = () => {
               <div className="grid grid-cols-12 gap-6 justify-center sm:justify-center">
                 <DashboardCard01 count={hostedEventsCount} />
                 <DashboardCard03 count={upcomingEventsCount} />
-                <DashboardCard04 count={pendingEvents.length} events={pendingEvents} />
+                <DashboardCard04 count={pendingEvents.length} events={pendingEvents} fetchWidgetData={fetchWidgetData} fetchAndGroupEvents={fetchAndGroupEvents}/>
               </div>
-              <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-4">
-                {/* Filter Button */}
+              <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-4 mt-4 sm:mt-0">
+                {/* Search, Filter and Creation buttons */}
+                
+                <button
+                  className="inline-flex size-[35px] cursor-default items-center justify-center rounded-full bg-white text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black"
+                  onClick={() => setSearchModalOpen(true)}
+                >
+                  <span className="sr-only">Search</span>
+                  <svg
+                    className="fill-current text-gray-500/80 dark:text-gray-400/80"
+                    width={16}
+                    height={16}
+                    viewBox="0 0 16 16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M7 14c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7ZM7 2C4.243 2 2 4.243 2 7s2.243 5 5 5 5-2.243 5-5-2.243-5-5-5Z" />
+                    <path d="m13.314 11.9 2.393 2.393a.999.999 0 1 1-1.414 1.414L11.9 13.314a8.019 8.019 0 0 0 1.414-1.414Z" />
+                  </svg>
+                </button>
+
                 <DropdownFilter
                   onApply={(sortBy) => {
-                    const token = localStorage.getItem("accessToken");
-                    if (!token) return;
-                    const userId = jwtDecode<DecodedToken>(token).user_id;
+                    if (!userId) {
+                      console.error("No current user");
+                      return;
+                    }
                     fetchFilteredAndSortedEvents(userId, sortBy); // Pass both userId and selected sortBy
                   }}
                   align="right"
                 />
-                <PopoverDemo onFilterApply ={handleFilterApply} align="right" />
+                <PopoverDemo onFilterApply ={handleFilterApply} align="left" />
                 <button
                   onClick={handleCreateClick}
                   className="text-white bg-[#050708] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2"
                 >
                   <svg
-                    className="fill-current shrink-0 xs:hidden"
+                    className="fill-current shrink-0 xs:hidden block md:hidden"
                     width="16"
                     height="16"
                     viewBox="0 0 16 16"
                   >
                     <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                   </svg>
-                  <span className="max-xs:sr-only">Add Event</span>
+                  <span className="max-xs:sr-only hidden md:inline ">Add Event</span>
                 </button>
+                
 
               
               </div>
@@ -363,6 +397,12 @@ export const Home: React.FC = () => {
           onCancel={() => setConfirmationOpen(false)}
         />
       </Popup>
+
+      <ModalSearch
+        modalOpen={searchModalOpen}
+        setModalOpen={setSearchModalOpen}
+        onSearchResults={handleSearchResults}
+      />
 
   
     </div>

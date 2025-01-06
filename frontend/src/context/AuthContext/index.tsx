@@ -25,6 +25,7 @@ interface AuthContextData {
   signUp: (credentials: SignUpCredentials) => Promise<void | AxiosError>;
   signOut: () => void
   user: User
+  userId: number | null; 
   isAuthenticated: boolean
   loadingUserData: boolean
 }
@@ -37,6 +38,7 @@ export const AuthContext = createContext({} as AuthContextData);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>();
+  const [userId, setUserId] = useState<number | null>(null);
   const [loadingUserData, setLoadingUserData] = useState(true);
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -44,9 +46,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAuthenticated = Boolean(token);
   const userData = user as User;
 
-  if (token){
-    localStorage.setItem('accessToken', token);
-  }
+
+  useEffect(() => {
+    const token = getToken();
+
+    async function getUserData() {
+      setLoadingUserData(true);
+
+      try {
+        await setUserData();
+      } catch (error) {
+        signOut();
+      }
+      // await setUserData();
+
+      setLoadingUserData(false);
+    }
+    if (token) {
+      setAuthorizationHeader(api.defaults, token);
+      getUserData();
+    }
+  }, []);
+
 
   async function setUserData() {
     setLoadingUserData(true);
@@ -58,6 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { email, permissions, groups, first_name:name, last_name:surname } = response.data;
         console.log(response.data);
         setUser({ email, permissions, groups, name, surname });
+        setUserId(response.data.id);
       }
     } catch (error) {
       signOut();
@@ -106,37 +128,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!token) signOut(pathname);
   }, [pathname, token]);
 
-  useEffect(() => {
-    const token = getToken();
+  
 
-    async function getUserData() {
-      setLoadingUserData(true);
 
-      try {
-        const response = await api.get('/user/');
-
-        if (response?.data) {
-          const { email, permissions, groups, first_name:name, last_name:surname } = response.data;
-          console.log(response.data);
-          setUser({ email, permissions, groups, name, surname });
-        }
-      } catch (error) {
-        signOut();
-      }
-
-      setLoadingUserData(false);
-    }
-
-    if (token) {
-      setAuthorizationHeader(api.defaults, token);
-      getUserData();
-    }
-  }, []);
 
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
       user: userData,
+      userId,
       loadingUserData,
       signIn,
       signUp,

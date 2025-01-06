@@ -1,12 +1,11 @@
+import { inviteeService } from "../services/invitees.service";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { inviteeService } from "../services/invitees.service";
 
 interface User {
   id: number;
   email: string;
 }
-
 interface InviteProps {
   eventId: number;
   onCancel: () => void;
@@ -18,19 +17,16 @@ const Invite: React.FC<InviteProps> = ({ eventId,onCancel }) => {
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [debounceTimeout, setDebounceTimeout] = useState<number | null>(null);
 
-  // Handle input change and debounce API call
+  //suggestions on instant input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-
     const timeout = window.setTimeout(() => {
       fetchUsers(value);
-    }, 300); // Debounce API call by 300ms
-
+    }, 300); 
     setDebounceTimeout(timeout);
   };
 
@@ -69,7 +65,7 @@ const Invite: React.FC<InviteProps> = ({ eventId,onCancel }) => {
         event: eventId,
         email: user.email,
       }));
-      const response = await inviteeService.bulkCreateInvitees(invitees); // Batch create invitees
+      const response = await inviteeService.bulkCreateInvitees(invitees); 
       if (response.errors?.length) {
         alert(
           `Some invitees could not be created:\n${response.errors
@@ -106,12 +102,12 @@ const Invite: React.FC<InviteProps> = ({ eventId,onCancel }) => {
         />
         {/* Dropdown Suggestions */}
         {suggestions.length > 0 && (
-          <div className="absolute mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg z-10">
+          <div className="absolute mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg z-10">
             {suggestions.map((user) => (
               <div
                 key={user.id}
                 onClick={() => handleUserSelect(user)}
-                className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-300"
+                className="px-2 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-gray-700 dark:text-gray-300"
               >
                 {user.email}
               </div>
@@ -121,22 +117,22 @@ const Invite: React.FC<InviteProps> = ({ eventId,onCancel }) => {
       </div>
       {/* Selected Users */}
       {selectedUsers.length > 0 && (
-        <ul className="mt-4 space-y-2">
+        <div className="mt-4 space-y-2">
           {selectedUsers.map((user) => (
-            <li
+            <div
               key={user.id}
               className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-2 rounded-md"
             >
-              <span className="text-gray-700 dark:text-gray-300">{user.email}</span>
+              <span className="mr-2 text-gray-700 dark:text-gray-300">{user.email}</span>
               <button
                 onClick={() => handleRemoveUser(user.id)}
                 className="text-red-500 hover:text-red-700"
               >
                 Remove
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       <div className="mt-4 flex justify-end space-x-2">
@@ -148,7 +144,7 @@ const Invite: React.FC<InviteProps> = ({ eventId,onCancel }) => {
         </button>
         <button
           onClick={handleInvite}
-          className="px-4 py-2 bg-violet-500 text-white rounded-md hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="px-2 py-2 bg-violet-500 text-white rounded-md hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-500"
         >
           Invite
         </button>

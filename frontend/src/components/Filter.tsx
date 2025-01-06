@@ -1,14 +1,11 @@
-import React, { useState } from "react";
-import * as Popover from "@radix-ui/react-popover";
-import { MixerHorizontalIcon, Cross2Icon } from "@radix-ui/react-icons";
+import React, { useState, useRef, useEffect } from "react";
+import Transition from "../utils/Transition";
 import DatePicker, { DateObject } from "react-multi-date-picker";
+import { MixerHorizontalIcon, Cross2Icon } from "@radix-ui/react-icons";
+
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
-type FilterConditions = {
-  dateRange: [Date | null, Date | null];
-  rsvpStatus: string;
-};
 
 interface PopoverDemoProps {
   onFilterApply: (filters: { dateRange: [Date | null, Date | null]; rsvpStatus: string }) => void;
@@ -16,49 +13,83 @@ interface PopoverDemoProps {
 }
 
 const PopoverDemo: React.FC<PopoverDemoProps> = ({ onFilterApply, align = "left" }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [rsvpStatus, setRsvpStatus] = useState<string>("");
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        !triggerRef.current?.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
+
+  // Handle date range change
   const handleDateChange = (value: DateObject[] | DateObject) => {
     if (Array.isArray(value) && value.length === 2) {
       setDateRange([value[0]?.toDate() || null, value[1]?.toDate() || null]);
     }
   };
 
+  // Handle RSVP status change
   const handleRsvpChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRsvpStatus(event.target.value);
   };
 
+  // Apply filters
   const handleApplyFilters = () => {
     onFilterApply({ dateRange, rsvpStatus });
+    setDropdownOpen(false); // Close dropdown after applying filters
   };
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          className="inline-flex size-[35px] cursor-default items-center justify-center rounded-full bg-white text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black"
-          aria-label="Update dimensions"
-        >
-          <MixerHorizontalIcon />
-        </button>
-      </Popover.Trigger>
-      <Popover.Content
-        className="rounded bg-white p-5 shadow-[0_10px_38px_-10px_hsla(206,22%,7%,.35),0_10px_20px_-15px_hsla(206,22%,7%,.2)] will-change-[transform,opacity] focus:shadow-[0_10px_38px_-10px_hsla(206,22%,7%,.35),0_10px_20px_-15px_hsla(206,22%,7%,.2),0_0_0_2px_theme(colors.violet7)] data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=top]:animate-slideDownAndFade"
-        sideOffset={2}
+    <div className="relative inline-flex">
+      {/* Trigger Button */}
+      <button
+        ref={triggerRef}
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="inline-flex size-[35px] cursor-pointer items-center justify-center rounded-full bg-white text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none hover:bg-violet3"
+        aria-haspopup="true"
+        aria-expanded={dropdownOpen}
       >
-        <div className="flex flex-col gap-2.5">
-          <p className="mb-2.5 text-[15px] font-medium leading-[19px] text-mauve12">
-            Filter
-          </p>
-          <fieldset className="flex flex-col items-center gap-1">
-            <label
-              className="w-[75px] text-[13px] text-violet11"
-              htmlFor="width"
-            >
-              Date Range
-            </label>
+        <span className="sr-only">Filter</span>
+        <MixerHorizontalIcon />
+      </button>
+
+      {/* Dropdown Content */}
+      <Transition
+        show={dropdownOpen}
+        tag="div"
+        className={`origin-top-right z-10 absolute top-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-2 ${
+          align === "right" 
+            ? "right-0 left-auto" // Right alignment for all screens
+            : "left-0 right-auto" // Left alignment for all screens
+        } md:${align === "right" ? "right-0 left-auto" : "left-0 right-auto"}`}
+        enter="transition ease-out duration-200 transform"
+        enterStart="opacity-0 scale-95"
+        enterEnd="opacity-100 scale-100"
+        leave="transition ease-in duration-150"
+        leaveStart="opacity-100 scale-100"
+        leaveEnd="opacity-0 scale-95"
+      >
+        <div ref={dropdownRef} className="p-4">
+          {/* Filters */}
+          <div className="flex flex-col gap-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Date Range
+              </label>
               <DatePicker
                 range
                 value={
@@ -67,65 +98,40 @@ const PopoverDemo: React.FC<PopoverDemoProps> = ({ onFilterApply, align = "left"
                     : []
                 }
                 onChange={handleDateChange}
+                className="mt-2 w-full"
               />
             </div>
-          </fieldset>
-          <fieldset className="flex flex-col items-center gap-1">
-            <label
-              className="w-[75px] text-[13px] text-violet11"
-              htmlFor="maxWidth"
-            >
-              RSVP Status
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rsvp_status"
-                  value="accepted"
-                  checked={rsvpStatus === "accepted"}
-                  onChange={handleRsvpChange}
-                />
-                Accepted
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                RSVP Status
               </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rsvp_status"
-                  value="declined"
-                  checked={rsvpStatus === "declined"}
-                  onChange={handleRsvpChange}
-                />
-                Declined
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rsvp_status"
-                  value="pending"
-                  checked={rsvpStatus === "pending"}
-                  onChange={handleRsvpChange}
-                />
-                Pending
-              </label>
+              <div className="flex gap-4 mt-2">
+                {["accepted", "declined"].map((status) => (
+                  <label key={status} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="rsvp_status"
+                      value={status}
+                      checked={rsvpStatus === status}
+                      onChange={handleRsvpChange}
+                      className="form-radio"
+                    />
+                    <span className="text-sm capitalize">{status}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </fieldset>
+          </div>
+          {/* Apply Filters Button */}
           <button
             onClick={handleApplyFilters}
-            className="mt-4 w-full px-4 py-2 bg-violet-500 text-white rounded-md hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+            className="mt-4 text-white bg-[#050708] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2"
           >
             Apply Filters
           </button>
         </div>
-        <Popover.Close
-          className="absolute right-[5px] top-[5px] inline-flex size-[25px] cursor-default items-center justify-center rounded-full text-violet11 outline-none hover:bg-violet4 focus:shadow-[0_0_0_2px] focus:shadow-violet7"
-          aria-label="Close"
-        >
-          <Cross2Icon />
-        </Popover.Close>
-        <Popover.Arrow className="fill-white" />
-      </Popover.Content>
-    </Popover.Root>
+      </Transition>
+    </div>
   );
 };
 

@@ -5,13 +5,18 @@ from rest_framework import viewsets, filters, status
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.db.models import Q
 from django.utils import timezone
-from .models import Event, Invitee
-from .serializers import EventSerializer, InviteeSerializer
+from .models import Event, Invitee, Notification
+from .serializers import EventSerializer, InviteeSerializer, NotificationSerializer
 from django.utils.timezone import now
 from .models import InviteeEventView
 from .serializers import InviteeEventViewSerializer
 from django.db import transaction
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from rest_framework.views import APIView
+
+User=get_user_model()
 
 class IsEventOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
@@ -25,10 +30,10 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsEventOwner]
 
     def perform_create(self, serializer):
-        # Save the event and associate it with the currently authenticated user
+
         event = serializer.save(created_by=self.request.user)
 
-        # Automatically add the creator as an invitee
+
         Invitee.objects.create(
             event=event,
             user=self.request.user,
@@ -59,6 +64,18 @@ class EventViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(start_date__gte=start_date, end_date__lte=end_date)
         
         return queryset
+    
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        query = request.query_params.get('query', '')
+        if query:
+            events = self.queryset.filter(
+                Q(title__icontains=query)
+            )
+        else:
+            events = self.queryset.none()
+        serializer = self.get_serializer(events, many=True)
+        return Response(serializer.data)
 
 class InviteeViewSet(viewsets.ModelViewSet):
     queryset = Invitee.objects.all()
@@ -246,4 +263,35 @@ class InviteeEventViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter records by event_id
         records = InviteeEventView.objects.filter(event_id=event_id).order_by('-start_date')
         serializer = self.get_serializer(records, many=True)
+        return Response(serializer.data)
+    
+class NotificationListView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        notifications = Notification.objects.filter(user=user).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+
+class MarkNotificationReadView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request, notification_id):
+        try:
+            notification = Notification.objects.get(id=notification_id, user=request.user)
+            notification.is_read = True
+            notification.save()
+            return Response({"message": "Notification marked as read."})
+        except Notification.DoesNotExist:
+            return Response({"error": "Notification not found."}, status=404)
+
+class UnreadNotificationListView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        # Fetch notifications that are unread
+        unread_notifications = Notification.objects.filter(user=user, is_read=False).order_by('-created_at')
+        serializer = NotificationSerializer(unread_notifications, many=True)
         return Response(serializer.data)

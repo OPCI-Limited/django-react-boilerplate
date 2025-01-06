@@ -29,7 +29,7 @@ const EventInfo: React.FC<EventInfoProps> = ({ event, onClose }) => {
 
   return (
     <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Event Details</h2>
+      
       <div className="space-y-4">
         <div>
           <span className="font-semibold text-gray-700 dark:text-gray-300">Title:</span>
@@ -58,13 +58,13 @@ const EventInfo: React.FC<EventInfoProps> = ({ event, onClose }) => {
         <div>
           <span className="font-semibold text-gray-700 dark:text-gray-300">Number of Participant:</span>
           <p className="text-gray-800 dark:text-gray-100">
-            {participantStats.totalInvites} invites sent, {participantStats.acceptedInvites} accepted
+            {participantStats.totalInvites} participants, {participantStats.totalInvites} invites sent, {participantStats.acceptedInvites} accepted
           </p>
         </div>
         {event.event_created_by && (
           <div>
             <span className="font-semibold text-gray-700 dark:text-gray-300">Host:</span>
-            <p className="text-gray-800 dark:text-gray-100">{event.first_name} {event.last_name} - ({event.host_email})</p>
+            <p className="text-gray-800 dark:text-gray-100">{event.first_name} {event.last_name} -<a className="text-blue-500 hover:underline px-2" href={`mailto:${event.host_email}`}>({event.host_email})</a></p>
           </div>
         )}
       </div>

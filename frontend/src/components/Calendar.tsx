@@ -1,22 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import Popup from 'reactjs-popup';
-import jwtDecode from 'jwt-decode';
 import EventForm from './EventForm';
 import EventInfo from './EventInfo';
 import { InviteeEventView } from '../interfaces/InviteeEventView';
 import { inviteeEventViewService } from '../services/InviteeEventViewService';
 import { Event } from '../interfaces/Event.model';
 import { eventService } from '../services/event.service';
-
-interface DecodedToken {
-  user_id: number;
-  exp: number;
-  iat: number;
-}
+import { AuthContext } from '../context/AuthContext'
 
 const Calendar: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -24,13 +18,16 @@ const Calendar: React.FC = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   const [currentEventView, setCurrentEventView] = useState<InviteeEventView | null>(null);
+  const { userId } = useContext(AuthContext);
+  
 
   // Fetch events for the calendar
   const fetchEvents = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('No access token found');
-      const userId = jwtDecode<DecodedToken>(token).user_id;
+      if (!userId) {
+        console.error("No current user");
+        return;
+      }
 
       const allEvents = await inviteeEventViewService.getByUserId(userId);
       const formattedEvents = allEvents.map((event: InviteeEventView) => ({
@@ -39,8 +36,14 @@ const Calendar: React.FC = () => {
         start: event.start_date,
         end: event.end_date,
         extendedProps: {
+          event_title: `${event.event_title}`,
+          starts: event.start_date,
+          ends: event.end_date,
           description: event.event_description,
           location: event.event_location,
+          created_by: event.event_created_by,
+          eventid_inviteeid: event.id,
+          host_mail: event.host_email
         },
       }));
       setEvents(formattedEvents);
@@ -53,19 +56,41 @@ const Calendar: React.FC = () => {
     fetchEvents();
   }, []);
 
-  const handleDateClick = () => {
+  const handleDateClick = (info: any) => {
+    const clickedDate = new Date(info.dateStr);
+    const today = new Date();
+
+    // Reset time for accurate date comparison
+    clickedDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
+    if (clickedDate < today) {
+      alert("You can't create an event on a past date!");
+      return;
+    }
     setCurrentEvent(new Event());
     setEventFormOpen(true);
   };
 
   const handleEventClick = async (info: any) => {
     try {
+
+      const { event_title, location, description, starts, ends, host_mail, created_by, eventid_inviteeid } = info.event.extendedProps;
       const eventId = Number(info.event.id);
-      const eventDetails = await inviteeEventViewService.getByEventId(eventId);
+      const event = new InviteeEventView();
+      event.event_title = event_title;
+      event.event_location = location;
+      event.event_description = description;
+      event.start_date = starts;
+      event.end_date = ends;
+      event.event_created_by = created_by;
+      event.host_email = host_mail;
+      event.id = eventid_inviteeid;
+
   
-      if (eventDetails) {
-        setCurrentEventView(eventDetails); // Set the specific InviteeEventView
-        setViewModalOpen(true); // Open the view modal
+      if (event) {
+        setCurrentEventView(event); 
+        setViewModalOpen(true); 
       }
     } catch (error) {
       console.error("Error fetching event details:", error);
@@ -76,9 +101,10 @@ const Calendar: React.FC = () => {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('No access token found');
-      const userId = jwtDecode<DecodedToken>(token).user_id;
+      if (!userId) {
+        console.error("No current user");
+        return;
+      }
 
       if (currentEvent?.id) {
         await eventService.updateEvent(currentEvent.id, currentEvent);

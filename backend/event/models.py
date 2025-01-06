@@ -1,5 +1,8 @@
 from django.db import models
-from django.conf import settings  # For settings.AUTH_USER_MODEL
+from django.conf import settings
+from django.utils.timezone import now
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 class Event(models.Model):
     id = models.AutoField(primary_key=True)
@@ -9,7 +12,7 @@ class Event(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Use the custom user model
+        settings.AUTH_USER_MODEL,  
         on_delete=models.CASCADE,
         related_name='events'
     )
@@ -33,7 +36,7 @@ class Invitee(models.Model):
         related_name='invitees'
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,  # Use the custom user model
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -51,7 +54,7 @@ class Invitee(models.Model):
 
 
 class InviteeEventView(models.Model):
-    id = models.CharField(max_length=255, primary_key=True)  # Use the id from the view
+    id = models.CharField(max_length=255, primary_key=True)  
     invitee_id = models.IntegerField()
     event_id = models.IntegerField()
     user_id = models.IntegerField()
@@ -70,6 +73,28 @@ class InviteeEventView(models.Model):
     host_email = models.EmailField()
 
     class Meta:
-        managed = False  # Do not create or manage the view in migrations
+        managed = False  
         db_table = 'invitee_event_view'
         ordering = ['event_created_at']
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"Notification for {self.user.username}: {self.message}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{self.user.id}",
+            {
+                "type": "send_notification",
+                "message": self.message,
+            },
+        )

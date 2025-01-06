@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from .models import Event, Invitee
+from .models import Event, Invitee, Notification
 from .models import InviteeEventView
 
 class EventSerializer(serializers.ModelSerializer):
@@ -27,3 +27,15 @@ class InviteeEventViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = InviteeEventView
         fields = '__all__'
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    event_title = serializers.CharField(source="event.title", read_only=True)
+    start_date = serializers.DateTimeField(source="event.start_date", read_only=True)
+    event_location = serializers.DateTimeField(source="event.location", read_only=True)
+    
+    
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'message', 'is_read', 'created_at', 'event', 'event_title', 'start_date', 'event_location']

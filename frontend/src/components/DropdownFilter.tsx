@@ -111,7 +111,7 @@ const DropdownFilter: React.FC<DropdownFilterProps> = ({ align = "left", onApply
             <ul className="flex items-center justify-between">
               <li>
                 <button
-                  className="btn-xs bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white"
+                  className="mt-4 text-white bg-[#050708] hover:bg-[#050708]/90 focus:ring-4 focus:outline-none focus:ring-[#050708]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#050708]/50 dark:hover:bg-[#050708]/30 me-2 mb-2"
                   onClick={handleApply}
                 >
                   Apply

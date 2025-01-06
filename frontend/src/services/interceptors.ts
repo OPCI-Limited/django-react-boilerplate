@@ -2,6 +2,7 @@ import axios, { AxiosDefaults, AxiosError, AxiosInstance, AxiosRequestConfig, Ax
 
 import { createTokenCookies, getRefreshToken, getToken, removeTokenCookies } from '../utils/tokenCookies';
 import { api } from './api';
+import { getAuthHeaders } from '../utils/getHeaders';
 
 axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 axios.defaults.xsrfCookieName = "csrftoken";
@@ -14,9 +15,12 @@ interface IFailedRequestQueue {
 let isRefreshing = false;
 let failedRequestQueue: IFailedRequestQueue[] = [];
 
+
 export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig | any, token: string) {
   request.headers.Authorization = `Bearer ${token}`;
 }
+
+
 
 function handleRefreshToken(refreshToken: string) {
   isRefreshing = true;
@@ -44,7 +48,12 @@ function handleRefreshToken(refreshToken: string) {
 
 function onRequest(config: AxiosRequestConfig): AxiosRequestConfig {
   const token = getToken();
+  const authHeaders = getAuthHeaders();
   token && setAuthorizationHeader(config, token);
+  config.headers = {
+    ...config.headers,
+    ...authHeaders,
+  };
   return config;
 }
 
