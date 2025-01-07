@@ -1,11 +1,13 @@
-import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import 'bootstrap/dist/css/bootstrap.css';
 import { api } from '../../services/api';
 import { setAuthorizationHeader } from '../../services/interceptors';
 import { createTokenCookies, getToken, removeTokenCookies } from '../../utils/tokenCookies';
 import { User } from '../../interfaces';
+import { useNotifications } from '../Notification';
+
 
 interface SignInCredentials {
   email: string
@@ -24,6 +26,7 @@ interface AuthContextData {
   signUp: (credentials: SignUpCredentials) => Promise<void | AxiosError>;
   signOut: () => void
   user: User
+  userId: number | null; 
   isAuthenticated: boolean
   loadingUserData: boolean
 }
@@ -34,14 +37,46 @@ interface AuthProviderProps {
 
 export const AuthContext = createContext({} as AuthContextData);
 
+export const useAuth = (): AuthContextData => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>();
+  const [userId, setUserId] = useState<number | null>(null);
   const [loadingUserData, setLoadingUserData] = useState(true);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const token = getToken();
   const isAuthenticated = Boolean(token);
   const userData = user as User;
+
+
+  useEffect(() => {
+    const token = getToken();
+
+    async function getUserData() {
+      setLoadingUserData(true);
+
+      try {
+        await setUserData();
+      } catch (error) {
+        signOut();
+      }
+      // await setUserData();
+
+      setLoadingUserData(false);
+    }
+    if (token) {
+      setAuthorizationHeader(api.defaults, token);
+      getUserData();
+    }
+  }, []);
+
 
   async function setUserData() {
     setLoadingUserData(true);
@@ -53,6 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { email, permissions, groups, first_name:name, last_name:surname } = response.data;
         console.log(response.data);
         setUser({ email, permissions, groups, name, surname });
+        setUserId(response.data.id);
       }
     } catch (error) {
       signOut();
@@ -71,6 +107,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthorizationHeader(api.defaults, access);
       // get user data after successful login to set user state
       await setUserData();
+      const { fetchUnreadNotifications } = useNotifications();
+      await fetchUnreadNotifications();
 
     } catch (error) {
       const err = error as AxiosError;
@@ -101,37 +139,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!token) signOut(pathname);
   }, [pathname, token]);
 
-  useEffect(() => {
-    const token = getToken();
+  
 
-    async function getUserData() {
-      setLoadingUserData(true);
 
-      try {
-        const response = await api.get('/user/');
-
-        if (response?.data) {
-          const { email, permissions, groups, first_name:name, last_name:surname } = response.data;
-          console.log(response.data);
-          setUser({ email, permissions, groups, name, surname });
-        }
-      } catch (error) {
-        signOut();
-      }
-
-      setLoadingUserData(false);
-    }
-
-    if (token) {
-      setAuthorizationHeader(api.defaults, token);
-      getUserData();
-    }
-  }, []);
 
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
       user: userData,
+      userId,
       loadingUserData,
       signIn,
       signUp,

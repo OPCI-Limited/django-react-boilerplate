@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
+import 'bootstrap/dist/css/bootstrap.css';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { AuthContext } from '../../context/AuthContext';
+
 
 export function Profile() {
   const { user, isAuthenticated, loadingUserData } = useContext(AuthContext);

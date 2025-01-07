@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'storages',
+    'event',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +80,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = "backend.asgi.application"
+
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -235,3 +239,15 @@ if USE_AZURE_STORAGE:
 
 print('USE_AZURE_STATIC_STORAGE', USE_AZURE_STORAGE)
 print('STORAGES', STORAGES)
+
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}

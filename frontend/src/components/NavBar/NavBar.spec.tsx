@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-
+import 'bootstrap/dist/css/bootstrap.css';
 import { NavBar } from '.'
 import { AuthContext } from '../../context/AuthContext'
+
 
 const providerUserUnloggedMock = {
   signIn: jest.fn(),

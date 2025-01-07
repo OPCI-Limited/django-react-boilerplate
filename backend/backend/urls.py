@@ -18,17 +18,19 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from identity.views import RegistrationAPIView, UserRetrieveUpdateAPIView
+from identity.views import RegistrationAPIView, UserRetrieveUpdateAPIView, search_users
 from system.views import health_check
 
 router = routers.DefaultRouter()
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/events/', include('event.urls')),
     path('api/', include(router.urls)),
     path('api/login/', TokenObtainPairView.as_view(), name='login'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='refresh'),
     path('api/register/', RegistrationAPIView.as_view(), name='register'),
     path('api/user/', UserRetrieveUpdateAPIView.as_view(), name='user'),
+    path('api/users/search/', search_users, name='search_users'),
     path('api/health/', health_check, name='health_check'),
 ]
