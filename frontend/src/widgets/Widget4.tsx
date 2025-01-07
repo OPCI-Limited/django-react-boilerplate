@@ -39,6 +39,7 @@ const DashboardCard04: React.FC<DashboardCard04Props> = ({ count, events,fetchWi
           <div className="text-xs font-semibold text-gray-800 dark:text-gray-100 mr-2">
             {count}
           </div>
+          <div>{count > 0 && (<div className="text-xs text-red-500 font-tiny animate-pulse ml-2 mr-2">view</div>)}</div>
         </div>
       </div>
       <Popup

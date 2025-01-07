@@ -40,5 +40,7 @@ class Migration(migrations.Migration):
                 identity_user u
             ON
                 u.id = e.created_by_id;
-        """)
+        """,
+        reverse_sql="DROP VIEW IF EXISTS invitee_event_view;",
+        )
     ]
