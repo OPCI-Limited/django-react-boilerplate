@@ -69,7 +69,12 @@ The backend Dockerfile has been updated to:
 
 ### Validation of resources
 
-The provided Terraform was deployed to an Azure subscription and tested to ensure proper resource configuration. Due to time constraints, the actual web app container build/start process was not fully validated. However, this setup provides a solid foundation for securely hosting the application, with minimal additional configuration required.
+```sh
+terraform validate
+terraform plan
+```
+
+The provided Terraform configuration was first validated using terraform plan to ensure correctness before applying the changes. It was then deployed to an Azure subscription and tested to confirm proper resource configuration. Due to time constraints, the actual web app container build/start process was not fully validated. However, this setup provides a solid foundation for securely hosting the application, with minimal additional configuration required.
 
 # Future Enhancements
 
@@ -80,20 +85,36 @@ To make thsi deployment adaptable for different environments (e.g., dev, staging
 * Implement environment-specific configuration using variables (var.environment, var.backend.config, var.frontend.config).
 * Use Azure DevOps Pipelines or GitHub Actions for CI/CD, with environment/path-based deployment triggers.
 
-2. Network Security & Segmentation (Hub-Spoke Topology)
-Currently, everything sits in a single VNet, but introducing a Hub-Spoke model improves security and scalability:
+## Monitoring & Observability
+Improving insight into application health and security by adding:
 
-Hub VNet
-Houses shared resources like firewall, Bastion, VPN Gateway, and monitoring/logging services (e.g., Azure Monitor, Log Analytics, Security Center).
-Controls outbound/inbound traffic via Azure Firewall or a third-party NGFW.
-Can integrate with an on-premises network via ExpressRoute or VPN Gateway.
-Spoke VNets
-Separate spokes for web apps, backend services, and database.
-Use NSGs (Network Security Groups) and UDRs (User-Defined Routes) to control traffic flow.
-Limit exposure with Private Link and Private Endpoints (as you're already doing).
-Firewall & Route Tables Enhancements
-Implement Azure Firewall with threat intelligence-based filtering.
-Enforce traffic flow control using UDRs, ensuring:
-Web apps only communicate with the backend.
-The backend only reaches the database over a private endpoint.
-Internet egress is restricted, allowing only approved destinations (e.g., package registries).
+* Application Insights for app-level telemetry.
+* Azure Monitor & Log Analytics for infrastructure logging.
+* Budget alerts and cost tracking to prevent overuse of cloud resources.
+
+## Network Security & Segmentation
+Currently, everything sits in a single VNet, but introducing a Hub-Spoke model would improve security and scalability:
+
+* Hub VNet
+- Houses shared resources like firewall, Bastion, and monitoring/logging services
+- Control outbound/inbound traffic via Azure Firewall
+
+* Spoke VNets
+- Separate spokes for each web app, backend services, and databases.
+- Use NSGs (Network Security Groups) and UDRs (User-Defined Routes) to control traffic flow.
+
+* Firewall & Route Tables Enhancements
+- Web apps only communicate with the backend.
+- The backend only reaches the database over a private endpoint.
+- Internet egress is restricted, allowing only approved destinations.
+
+## CI/CD & Deployment 
+Building Docker Images & Terraform from a secure and controlled CI/CD Pipeline
+
+Use GitHub Actions or Azure DevOps to:
+- Validate Terraform plans before applying changes.
+- Build and Deploy new docker images
+
+## Unit Testing
+
+Incorporating unit testing for Terraform using tools like Terratest to validate infrastructure configurations before deployment. This would include tests to ensure the correct resources are provisioned, security settings are applied, and dependencies are correctly managed. 
