@@ -31,4 +31,5 @@ urlpatterns = [
     path('api/register/', RegistrationAPIView.as_view(), name='register'),
     path('api/user/', UserRetrieveUpdateAPIView.as_view(), name='user'),
     path('api/health/', health_check, name='health_check'),
+    path('api/', include('events.urls')),
 ]
