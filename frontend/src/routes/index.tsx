@@ -16,6 +16,8 @@ import { Users } from '../pages/Users';
 import { Profile } from '../pages/Profile';
 import { PrivateRoute } from './PrivateRoute';
 import { PublicRoute } from './PublicRoute';
+import EventList from "../components/events/EventList";
+import EventForm from "../components/events/EventForm";
 
 export const RouteList = () => (
   <>
@@ -80,6 +82,19 @@ export const RouteList = () => (
         }
       />
 
+      <Route 
+        path="/events" 
+        element={
+          <EventList/>
+        } 
+      />
+
+      <Route 
+        path="/events/create" 
+        element={
+          <EventForm/>
+        } 
+      />
       <Route path="*" element={<h1>404</h1>}/>
     </Routes>
   </>

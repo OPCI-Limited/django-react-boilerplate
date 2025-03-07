@@ -1,0 +1,116 @@
+.event-list-container {
+  max-width: 80%;
+  margin: 0 auto;
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+}
+
+.create-event-button {
+  display: inline-block;
+  margin-bottom: 15px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.create-event-button:hover {
+  background-color: #0056b3;
+}
+
+.event-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.event-table th,
+.event-table td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.event-table th {
+  background-color: #f2f2f2;
+  color: #333;
+}
+
+.event-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.event-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.invite-users-button {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-top: 5px;
+  background-color: #28a745;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.invite-users-button:hover {
+  background-color: #218838;
+}
+
+.cancel-event-button {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-top: 5px;
+  margin-left: 5px;
+  background-color: red;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.event-list-container {
+  padding: 20px;
+}
+
+.event-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.event-table th,
+.event-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.event-table th {
+  background-color: #f4f4f4;
+}
+
+.invite-users-button {
+  padding: 6px 12px;
+  background-color: green;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.invite-users-button:hover {
+  background-color: #0056b3;
+}

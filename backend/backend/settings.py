@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'storages',
+    'events',
 ]
 
 MIDDLEWARE = [

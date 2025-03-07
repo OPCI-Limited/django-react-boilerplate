@@ -15,8 +15,11 @@ export function NavBar() {
         <Navbar.Toggle aria-controls="basic-navbar-nav"/>
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            {/*<Nav.Link as={Link} to="/">Home</Nav.Link>*/}
-            {/*<Nav.Link as={Link} to="/register">Register</Nav.Link>*/}
+            {<Nav.Link as={Link} to="/">Home</Nav.Link>}
+            <NavDropdown title="Events"id="basic-nav-dropdown">
+              <NavDropdown.Item as={Link} to="/events">Events List</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/events/create">Create Event</NavDropdown.Item>
+            </NavDropdown>
             {/*<Nav.Link as={Link} to="/login">Login</Nav.Link>*/}
 
             <CanAccess permissions={['users.list']}>
