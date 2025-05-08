@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
+import { Button, Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { Navbar, Nav, Button, Container, NavDropdown } from 'react-bootstrap';
 
 import { AuthContext } from '../../context/AuthContext';
 import { CanAccess } from '../CanAccess';
@@ -12,6 +12,9 @@ export function NavBar() {
     <Navbar bg="light" expand="lg">
       <Container>
         <Navbar.Brand as={Link} to="/">MyApp</Navbar.Brand>
+        {isAuthenticated && (
+          <Navbar.Brand as={Link} to="/events">Events</Navbar.Brand>
+        )}
         <Navbar.Toggle aria-controls="basic-navbar-nav"/>
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">

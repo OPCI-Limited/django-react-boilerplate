@@ -5,15 +5,15 @@
  * Upgrading from v5
  * https://reactrouter.com/docs/en/v6/upgrading/v5
  */
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
+import { Events } from '../pages/Events';
 import { Home } from '../pages/Home';
 import { Login } from '../pages/Login';
 import { Metrics } from '../pages/Metrics';
+import { Profile } from '../pages/Profile';
 import { Register } from '../pages/Register';
 import { Users } from '../pages/Users';
-import { Profile } from '../pages/Profile';
 import { PrivateRoute } from './PrivateRoute';
 import { PublicRoute } from './PublicRoute';
 
@@ -76,6 +76,15 @@ export const RouteList = () => (
         element={
           <PrivateRoute permissions={['users.list', 'users.create']}>
             <Users/>
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events"
+        element={
+          <PrivateRoute permissions={['events.view_event']}>
+            <Events/>
           </PrivateRoute>
         }
       />

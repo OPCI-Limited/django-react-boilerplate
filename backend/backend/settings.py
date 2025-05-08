@@ -10,12 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
-from pathlib import Path
 from datetime import timedelta
+from pathlib import Path
 
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Added .env file loading for overriding environment variables easily when running in development mode (not using docker-compose)
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -27,6 +32,11 @@ SECRET_KEY = 'django-insecure-t@rv+=&nv-ji(ikr_f1(_$hrjg_+w*ep*uevi5!gn-2g4f3s*l
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+
+# Needed to add this when running outside of docker
+CORS_ALLOWED_ORIGINS = [
+	"http://localhost:3000",
+]
 
 # Application definition
 
@@ -46,6 +56,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_extensions',
     'storages',
+    'events',
 ]
 
 MIDDLEWARE = [
