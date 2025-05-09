@@ -7,6 +7,8 @@
  */
 import { Route, Routes } from 'react-router-dom';
 
+import { CreateEvent } from '../pages/CreateEvent';
+import { EditEvent } from '../pages/EditEvent';
 import { Event } from '../pages/Event';
 import { Events } from '../pages/Events';
 import { Home } from '../pages/Home';
@@ -95,6 +97,24 @@ export const RouteList = () => (
         element={
           <PrivateRoute permissions={['events.view_event']}>
             <Event />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events/create"
+        element={
+          <PrivateRoute permissions={['events.add_event']}>
+            <CreateEvent />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events/:id/edit"
+        element={
+          <PrivateRoute permissions={['events.change_event']}>
+            <EditEvent />
           </PrivateRoute>
         }
       />

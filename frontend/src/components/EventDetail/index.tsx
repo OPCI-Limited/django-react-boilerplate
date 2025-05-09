@@ -11,7 +11,7 @@ export function EventDetail() {
   if (error || !event) return <p>Error loading event.</p>
 
   const handleEdit = () => {
-    console.log('Edit event', event.id);
+    navigate(`/events/${event.id}/edit`);
   };
   const handleDelete = () => {
     // Open delete modal or confirmation

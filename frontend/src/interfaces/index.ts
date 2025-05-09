@@ -26,3 +26,5 @@ export interface Event {
   start_time: string;
   end_time: string;
 }
+
+export type EventFormData = Omit<Event, 'id'>

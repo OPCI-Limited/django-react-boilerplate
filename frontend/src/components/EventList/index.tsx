@@ -23,8 +23,8 @@ export function EventsList() {
 
   const handleEdit = (e: React.MouseEvent, eventId: number) => {
     e.stopPropagation();
-    // navigate(`/events/${eventId}/edit`);
-    console.log('edit', eventId);
+    
+    navigate(`/events/${eventId}/edit`);
   };
 
   const handleDelete = (e: React.MouseEvent, eventId: number) => {
