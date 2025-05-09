@@ -1,10 +1,15 @@
 import { Button, Card, Container } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
+import { useState } from 'react';
+import { useDeleteEvent } from '../../hooks/events/useDeleteEvent';
 import { useEventById } from '../../hooks/events/useEvent';
+import { DeleteConfirmationModal } from '../DeleteConfirmationModal';
 
 export function EventDetail() {
   const { event, loading, error } = useEventById();
+  const { deleteEvent, loading: deleting } = useDeleteEvent();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const navigate = useNavigate();
 
   if (loading) return <p>Loading event...</p>
@@ -13,9 +18,20 @@ export function EventDetail() {
   const handleEdit = () => {
     navigate(`/events/${event.id}/edit`);
   };
+
   const handleDelete = () => {
-    // Open delete modal or confirmation
-    console.log('Delete event', event.id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteEvent(event.id);
+      navigate('/events');
+    } catch (err) {
+      console.error('Delete failed:', err);
+    } finally {
+      setShowDeleteModal(false);
+    }
   };
 
   return (
@@ -42,6 +58,14 @@ export function EventDetail() {
           </div>
         </Card.Body>
       </Card>
+
+      <DeleteConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        itemName="event"
+        loading={deleting}
+      />
     </Container>
   );
 }

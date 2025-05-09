@@ -2,11 +2,17 @@ import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import { useNavigate } from 'react-router-dom';
 
+import { useState } from 'react';
+import { useDeleteEvent } from '../../hooks/events/useDeleteEvent';
 import useEvents from '../../hooks/events/useEvents';
 import { formatDate } from '../../utils/formatDate';
+import { DeleteConfirmationModal } from '../DeleteConfirmationModal';
 
 export function EventsList() {
-  const { events, loading, error } = useEvents();
+  const { events, loading, error, refreshEvents } = useEvents();
+  const { deleteEvent, loading: deleting } = useDeleteEvent();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<number | null>(null);
   const navigate = useNavigate();
 
   if (loading) return <p>Loading events...</p>;
@@ -29,35 +35,62 @@ export function EventsList() {
 
   const handleDelete = (e: React.MouseEvent, eventId: number) => {
     e.stopPropagation();
-    // Trigger modal or confirm delete logic
-    console.log('Delete event', eventId);
+
+    setEventToDelete(eventId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (eventToDelete == null) return;
+
+    try {
+      await deleteEvent(eventToDelete);
+
+      refreshEvents();
+    } catch (err) {
+      // TODO: handle error
+      console.error('Failed to delete event:', err);
+    } finally {
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    }
   };
 
   return (
-    <Table striped bordered hover>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Date & Time</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {events.map(event => (
-          <tr key={event.id} onClick={() => handleRowClick(event.id)} className="clickable-row">
-            <td>{event.title}</td>
-            <td>{formatDate(event.start_time)}</td>
-            <td onClick={(e) => e.stopPropagation()}>
-              <Button variant="outline-primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
-                Edit
-              </Button>
-              <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
-                Delete
-              </Button>
-            </td>
+    <>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Date & Time</th>
+            <th>Actions</th>
           </tr>
-        ))}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {events.map(event => (
+            <tr key={event.id} onClick={() => handleRowClick(event.id)} className="clickable-row">
+              <td>{event.title}</td>
+              <td>{formatDate(event.start_time)}</td>
+              <td onClick={(e) => e.stopPropagation()}>
+                <Button variant="outline-primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
+                  Edit
+                </Button>
+                <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+
+      <DeleteConfirmationModal
+        show={showDeleteModal}
+        onHide={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        itemName="event"
+        loading={deleting}
+      />
+    </>
   );
 }

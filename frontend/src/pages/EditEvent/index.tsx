@@ -1,3 +1,4 @@
+import Container from 'react-bootstrap/Container';
 import { useParams } from 'react-router-dom';
 import { EventForm } from '../../components/EventForm';
 
@@ -7,6 +8,8 @@ export function EditEvent() {
   if (!id) return <p>Event not found.</p>
 
   return (
-    <EventForm eventId={+id}></EventForm>
+    <Container className="mt-4">
+      <EventForm eventId={+id}></EventForm>
+    </Container>
   );
 }

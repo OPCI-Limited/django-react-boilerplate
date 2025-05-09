@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../services/api';
 
 import { APIResponseWithCollection, Event } from '../../interfaces';
@@ -10,14 +10,20 @@ const useEvents = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchEvents = useCallback(() => {
+    setLoading(true);
+    
     api.get<EventResponse>('/events')
-      .then((response) => setEvents(response.data.results))
+      .then((res) => setEvents(res.data.results))
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
   }, []);
 
-  return { events, loading, error };
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  return { events, loading, error, refreshEvents: fetchEvents };
 };
 
 export default useEvents;
