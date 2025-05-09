@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Event } from '../../interfaces';
 import { api } from '../../services/api';
-import { Event } from './useEvents';
 
 export const useEventById = (idOverride?: string) => {
   const routeParams = useParams<{ id: string }>();

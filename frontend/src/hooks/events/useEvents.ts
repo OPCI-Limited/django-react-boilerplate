@@ -1,21 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 
-interface APIResponseWithCollection<T> {
-  count: number;
-  next: number | null;
-  previous: number | null;
-  results: T[];
-}
-
-export interface Event {
-  id: number;
-  title: string;
-  description: string;
-  location: string;
-  start_time: string;
-  end_time: string;
-}
+import { APIResponseWithCollection, Event } from '../../interfaces';
 
 type EventResponse = APIResponseWithCollection<Event>;
 

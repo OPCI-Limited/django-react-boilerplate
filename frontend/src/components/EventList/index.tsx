@@ -3,6 +3,7 @@ import Table from 'react-bootstrap/Table';
 import { useNavigate } from 'react-router-dom';
 
 import useEvents from '../../hooks/events/useEvents';
+import { formatDate } from '../../utils/formatDate';
 
 export function EventsList() {
   const { events, loading, error } = useEvents();
@@ -10,6 +11,10 @@ export function EventsList() {
 
   if (loading) return <p>Loading events...</p>;
   if (error) return <p>Error loading events.</p>;
+
+  if (!loading && events.length === 0) {
+    return <p>No events yet. Click "Create Event" to get started!</p>;
+  }
 
   const handleRowClick = (eventId: number) => {
     navigate(`/events/${eventId}`);
@@ -41,12 +46,12 @@ export function EventsList() {
         {events.map(event => (
           <tr key={event.id} onClick={() => handleRowClick(event.id)} className="clickable-row">
             <td>{event.title}</td>
-            <td>{new Date(event.start_time).toLocaleString()}</td>
+            <td>{formatDate(event.start_time)}</td>
             <td onClick={(e) => e.stopPropagation()}>
-              <Button variant="primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
+              <Button variant="outline-primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
                 Edit
               </Button>
-              <Button variant="danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
+              <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
                 Delete
               </Button>
             </td>
