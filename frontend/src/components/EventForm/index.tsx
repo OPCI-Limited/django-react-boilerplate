@@ -8,7 +8,7 @@ import * as yup from 'yup';
 import { useIsMounted } from '../../hooks/events/useIsMounted';
 import { Event, EventFormData } from '../../interfaces';
 import { api } from '../../services/api';
-import { formatDateForInput } from '../../utils/formatDate';
+import { formatDateForInput, parseInputToUTC } from '../../utils/formatDate';
 
 
 interface EventFormProps {
@@ -21,14 +21,19 @@ const formSchema = yup.object({
   description: yup.string().trim().required('Description is required'),
   location: yup.string().trim().required('Location is required'),
   start_time: yup
-    .date()
-    .typeError('Start time is required')
+    .string()
     .required('Start time is required'),
   end_time: yup
-    .date()
-    .typeError('End time is required')
-    .min(yup.ref('start_time'), 'End time must be after start time')
-    .required('End time is required'),
+    .string()
+    .required('End time is required')
+    .test(
+      'is-after-start',
+      'End time must be after start time',
+      function (value) {
+        const { start_time } = this.parent;
+        return new Date(value) > new Date(start_time);
+      }
+    ),
 });
 
 export function EventForm({ eventId }: EventFormProps) {
@@ -60,11 +65,8 @@ export function EventForm({ eventId }: EventFormProps) {
 
           reset({
             ...event,
-            // react bootstrap datetime-local input requires a string, but form schema uses Date so got a mismatch here
-            // eslint-disable-next-line
-            start_time: formatDateForInput(response.data.start_time) as any,
-            // eslint-disable-next-line
-            end_time: formatDateForInput(response.data.end_time) as any,
+            start_time: formatDateForInput(response.data.start_time),
+            end_time: formatDateForInput(response.data.end_time),
           });
         }
       })
@@ -91,7 +93,11 @@ export function EventForm({ eventId }: EventFormProps) {
       await api({
         method,
         url: endpoint,
-        data,
+        data: {
+          ...data,
+          start_time: parseInputToUTC(data.start_time),
+          end_time: parseInputToUTC(data.end_time),
+        },
       });
 
       navigate('/events');
