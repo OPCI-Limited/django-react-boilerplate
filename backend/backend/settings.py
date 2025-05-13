@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'storages',
     'events',
+    'invitation',
 ]
 
 MIDDLEWARE = [
