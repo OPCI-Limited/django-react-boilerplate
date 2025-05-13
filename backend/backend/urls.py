@@ -15,7 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
-from identity.views import RegistrationAPIView, UserRetrieveUpdateAPIView
+from identity.views import (ReadOnlyUserViewSet, RegistrationAPIView,
+                            UserRetrieveUpdateAPIView)
 from rest_framework import routers
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
@@ -30,6 +31,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='refresh'),
     path('api/register/', RegistrationAPIView.as_view(), name='register'),
     path('api/user/', UserRetrieveUpdateAPIView.as_view(), name='user'),
+    path('api/users/', ReadOnlyUserViewSet.as_view({'get': 'list'}), name='read_only_users'),
     path('api/health/', health_check, name='health_check'),
     path('', include('events.urls')),
     path('', include('invitation.urls')),
