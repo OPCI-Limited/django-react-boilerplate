@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useDeleteEvent } from '../../hooks/events/useDeleteEvent';
 import useEvents from '../../hooks/events/useEvents';
 import { formatDate } from '../../utils/formatDate';
+import { CanAccess } from '../CanAccess';
 import { DeleteConfirmationModal } from '../DeleteConfirmationModal';
 
 export function EventsList() {
@@ -72,12 +73,17 @@ export function EventsList() {
               <td>{event.title}</td>
               <td>{formatDate(event.start_time)}</td>
               <td onClick={(e) => e.stopPropagation()}>
-                <Button variant="outline-primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
-                  Edit
-                </Button>
-                <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
-                  Delete
-                </Button>
+                <CanAccess permissions={['events.change_event']}>
+                  <Button variant="outline-primary" size="sm" onClick={(e) => handleEdit(e, event.id)} className="me-2">
+                    Edit
+                  </Button>
+                </CanAccess>
+
+                <CanAccess permissions={['events.delete_event']}>
+                  <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(e, event.id)}>
+                    Delete
+                  </Button>
+                </CanAccess>
               </td>
             </tr>
           ))}
