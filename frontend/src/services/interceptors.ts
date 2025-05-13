@@ -14,6 +14,7 @@ interface IFailedRequestQueue {
 let isRefreshing = false;
 let failedRequestQueue: IFailedRequestQueue[] = [];
 
+// eslint-disable-next-line
 export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig | any, token: string) {
   request.headers.Authorization = `Bearer ${token}`;
 }
