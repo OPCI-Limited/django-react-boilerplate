@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
+import { useIsMounted } from '../../hooks/events/useIsMounted';
 import { Event, EventFormData } from '../../interfaces';
 import { api } from '../../services/api';
 import { formatDateForInput } from '../../utils/formatDate';
+
 
 interface EventFormProps {
   /** Set event id to put form in edit mode */
@@ -21,6 +23,7 @@ export function EventForm({ eventId }: EventFormProps) {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const isMounted = useIsMounted();
 
   // Fetch event data if we're editing
   useEffect(() => {
@@ -28,26 +31,30 @@ export function EventForm({ eventId }: EventFormProps) {
       return;
     }
 
-    // if (eventId) {
     setLoading(true);
   
     api.get<Event>(`/events/${eventId}`)
       .then((response) => {
-        const event = response.data;
+        if (isMounted.current) {
+          const event = response.data;
 
-        setFormData({
-          ...event,
-          start_time: formatDateForInput(response.data.start_time),
-          end_time: formatDateForInput(response.data.end_time),
-        });
+          setFormData({
+            ...event,
+            start_time: formatDateForInput(response.data.start_time),
+            end_time: formatDateForInput(response.data.end_time),
+          });
+        }
       })
       .catch((error) => {
         // TODO: handle error
         console.error('Error fetching event:', error);
       })
-      .finally(() => setLoading(false));
-    // }
-  }, [eventId, formatDateForInput]);
+      .finally(() => {
+        if (isMounted.current) {
+          setLoading(false)
+        }
+      });
+  }, [eventId, isMounted]);
 
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,25 +66,28 @@ export function EventForm({ eventId }: EventFormProps) {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     const endpoint = eventId ? `/events/${eventId}/` : '/events/';
     const method = eventId ? 'PATCH' : 'POST'; // Use PATCH for editing, POST for creating
 
-    api({
-      method,
-      url: endpoint,
-      data: formData,
-    })
-      .then(() => {
-        navigate('/events'); // Redirect to events list after successful submit
-      })
-      .catch((error) => {
-        console.error('Error submitting event:', error);
-      })
-      .finally(() => setLoading(false));
+    try {
+      await api({
+        method,
+        url: endpoint,
+        data: formData,
+      });
+
+      navigate('/events');
+    } catch (error) {
+      console.error('Error submitting event:', error);
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
   };
 
   return (
