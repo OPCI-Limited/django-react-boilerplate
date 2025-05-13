@@ -34,3 +34,17 @@ export interface EventFormData {
   start_time: string;
   end_time: string;
 }
+
+export enum InvitationStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DECLINED = 'declined',
+}
+
+export interface Invitation {
+  id: number
+  event: Event,
+  created_by: number,
+  invitee: number,
+  status: InvitationStatus,
+}

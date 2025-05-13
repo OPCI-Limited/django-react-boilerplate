@@ -13,7 +13,10 @@ export function NavBar() {
       <Container>
         <Navbar.Brand as={Link} to="/">MyApp</Navbar.Brand>
         {isAuthenticated && (
-          <Navbar.Brand as={Link} to="/events">Events</Navbar.Brand>
+          <NavDropdown title="Events" id="events-nav-dropdown">
+            <NavDropdown.Item as={Link} to="/events">All Events</NavDropdown.Item>
+            <NavDropdown.Item as={Link} to="/invitations">Invitations</NavDropdown.Item>
+          </NavDropdown>
         )}
         <Navbar.Toggle aria-controls="basic-navbar-nav"/>
         <Navbar.Collapse id="basic-navbar-nav">

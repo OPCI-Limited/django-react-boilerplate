@@ -12,6 +12,7 @@ import { EditEvent } from '../pages/EditEvent';
 import { Event } from '../pages/Event';
 import { Events } from '../pages/Events';
 import { Home } from '../pages/Home';
+import { Invitations } from '../pages/Invitations';
 import { Login } from '../pages/Login';
 import { Metrics } from '../pages/Metrics';
 import { Profile } from '../pages/Profile';
@@ -115,6 +116,15 @@ export const RouteList = () => (
         element={
           <PrivateRoute permissions={['events.change_event']}>
             <EditEvent />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/invitations"
+        element={
+          <PrivateRoute permissions={['events.view_event']}>
+            <Invitations />
           </PrivateRoute>
         }
       />
