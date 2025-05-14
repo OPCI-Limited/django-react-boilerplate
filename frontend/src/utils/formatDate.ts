@@ -19,3 +19,12 @@ export function parseInputToUTC(localDateTime: string): string {
   const localDate = new Date(localDateTime);
   return localDate.toISOString();
 }
+
+export function formatDateForGrouping(date: string) {
+  return new Date(date).toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
