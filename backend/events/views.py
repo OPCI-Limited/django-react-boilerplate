@@ -1,9 +1,11 @@
 from invitation.models import InvitationStatus
 from rest_framework import permissions, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Event
 from .permissions import IsEventCreator, IsEventCreatorOrEventMember
-from .serializers import EventSerializer
+from .serializers import EventAttendeeSerializer, EventSerializer
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -38,4 +40,13 @@ class EventViewSet(viewsets.ModelViewSet):
         )
 
         return created_events | accepted_events
+    
+    @action(detail=True, methods=['get'])
+    def attendees(self, request, pk=None):
+        event = self.get_object()
+        invitations = event.invitations.filter(status__in=['pending', 'accepted'])
+
+        serializer = EventAttendeeSerializer(invitations, many=True)
+        
+        return Response(serializer.data)
 

@@ -4,8 +4,12 @@ import { Event } from '../../interfaces';
 import { api } from '../../services/api';
 
 export const useEventById = (idOverride?: string) => {
-  const routeParams = useParams<{ id: string }>();
+  const routeParams = useParams();
   const id = idOverride ?? routeParams.id;
+
+  if (!id) {
+    throw new Error('Event ID is required');
+  }
 
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState<boolean>(true);

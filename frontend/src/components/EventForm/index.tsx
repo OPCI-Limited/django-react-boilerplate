@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 
-import { useIsMounted } from '../../hooks/events/useIsMounted';
+import { useIsMounted } from '../../hooks/useIsMounted';
 import { Event, EventFormData } from '../../interfaces';
 import { api } from '../../services/api';
 import { formatDateForInput, parseInputToUTC } from '../../utils/formatDate';

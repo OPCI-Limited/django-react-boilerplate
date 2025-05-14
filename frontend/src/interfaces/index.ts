@@ -48,3 +48,15 @@ export interface Invitation {
   invitee: number,
   status: InvitationStatus,
 }
+
+export interface MinimalUser {
+  id: number;
+  email: string;
+  first_name: string;
+  lase_name: string;
+}
+
+export interface Attendee {
+  status: InvitationStatus;
+  user: MinimalUser
+}
