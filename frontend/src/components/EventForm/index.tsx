@@ -1,15 +1,14 @@
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useEffect, useState } from 'react';
-import { Button, Col, Form, Row, Spinner } from 'react-bootstrap';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import * as yup from 'yup';
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useEffect, useState } from "react";
+import { Button, Col, Form, Row, Spinner } from "react-bootstrap";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import * as yup from "yup";
 
-import { useIsMounted } from '../../hooks/useIsMounted';
-import { Event, EventFormData } from '../../interfaces';
-import { api } from '../../services/api';
-import { formatDateForInput, parseInputToUTC } from '../../utils/formatDate';
-
+import { useIsMounted } from "../../hooks/useIsMounted";
+import { Event, EventFormData } from "../../interfaces";
+import { api } from "../../services/api";
+import { formatDateForInput, parseInputToUTC } from "../../utils/formatDate";
 
 interface EventFormProps {
   /** Set event id to put form in edit mode */
@@ -17,18 +16,16 @@ interface EventFormProps {
 }
 
 const formSchema = yup.object({
-  title: yup.string().trim().required('Title is required'),
-  description: yup.string().trim().required('Description is required'),
-  location: yup.string().trim().required('Location is required'),
-  start_time: yup
-    .string()
-    .required('Start time is required'),
+  title: yup.string().trim().required("Title is required"),
+  description: yup.string().trim().required("Description is required"),
+  location: yup.string().trim().required("Location is required"),
+  start_time: yup.string().required("Start time is required"),
   end_time: yup
     .string()
-    .required('End time is required')
+    .required("End time is required")
     .test(
-      'is-after-start',
-      'End time must be after start time',
+      "is-after-start",
+      "End time must be after start time",
       function (value) {
         const { start_time } = this.parent;
         return new Date(value) > new Date(start_time);
@@ -57,8 +54,9 @@ export function EventForm({ eventId }: EventFormProps) {
     }
 
     setLoading(true);
-  
-    api.get<Event>(`/events/${eventId}`)
+
+    api
+      .get<Event>(`/events/${eventId}`)
       .then((response) => {
         if (isMounted.current) {
           const event = response.data;
@@ -71,23 +69,24 @@ export function EventForm({ eventId }: EventFormProps) {
         }
       })
       .catch((error) => {
-        // TODO: handle error
-        console.error('Error fetching event:', error);
+        console.error("Error fetching event:", error);
+        alert("Error fetching event data. Please try again later.");
       })
       .finally(() => {
         if (isMounted.current) {
-          setLoading(false)
+          setLoading(false);
         }
       });
   }, [eventId, isMounted]);
 
-
   // Handle form submission
-  const onSubmit: SubmitHandler<EventFormData> = async (data: EventFormData) => {
+  const onSubmit: SubmitHandler<EventFormData> = async (
+    data: EventFormData
+  ) => {
     setLoading(true);
 
-    const endpoint = eventId ? `/events/${eventId}/` : '/events/';
-    const method = eventId ? 'PATCH' : 'POST'; // Use PATCH for editing, POST for creating
+    const endpoint = eventId ? `/events/${eventId}/` : "/events/";
+    const method = eventId ? "PATCH" : "POST"; // Use PATCH for editing, POST for creating
 
     try {
       await api({
@@ -100,9 +99,9 @@ export function EventForm({ eventId }: EventFormProps) {
         },
       });
 
-      navigate('/events');
+      navigate("/events");
     } catch (error) {
-      console.error('Error submitting event:', error);
+      console.error("Error submitting event:", error);
     } finally {
       if (isMounted.current) {
         setLoading(false);
@@ -112,14 +111,14 @@ export function EventForm({ eventId }: EventFormProps) {
 
   return (
     <Form noValidate onSubmit={handleSubmit(onSubmit)}>
-      <h2>{eventId ? 'Edit Event' : 'Create Event'}</h2>
+      <h2>{eventId ? "Edit Event" : "Create Event"}</h2>
 
       <Form.Group controlId="formTitle">
         <Form.Label>Event Title</Form.Label>
         <Form.Control
           type="text"
           isInvalid={!!errors.title}
-          {...register('title')}
+          {...register("title")}
         />
 
         <Form.Control.Feedback type="invalid">
@@ -132,7 +131,7 @@ export function EventForm({ eventId }: EventFormProps) {
         <Form.Control
           as="textarea"
           isInvalid={!!errors.description}
-          {...register('description')}
+          {...register("description")}
         />
 
         <Form.Control.Feedback type="invalid">
@@ -145,7 +144,7 @@ export function EventForm({ eventId }: EventFormProps) {
         <Form.Control
           type="text"
           isInvalid={!!errors.location}
-          {...register('location')}
+          {...register("location")}
         />
 
         <Form.Control.Feedback type="invalid">
@@ -160,7 +159,7 @@ export function EventForm({ eventId }: EventFormProps) {
             <Form.Control
               type="datetime-local"
               isInvalid={!!errors.start_time}
-              {...register('start_time')}
+              {...register("start_time")}
             />
 
             <Form.Control.Feedback type="invalid">
@@ -175,7 +174,7 @@ export function EventForm({ eventId }: EventFormProps) {
             <Form.Control
               type="datetime-local"
               isInvalid={!!errors.end_time}
-              {...register('end_time')}
+              {...register("end_time")}
             />
 
             <Form.Control.Feedback type="invalid">
@@ -185,15 +184,16 @@ export function EventForm({ eventId }: EventFormProps) {
         </Col>
       </Row>
 
-      <Button variant="primary" type="submit" disabled={loading || isSubmitting} className="mt-3">
+      <Button
+        variant="primary"
+        type="submit"
+        disabled={loading || isSubmitting}
+        className="mt-3"
+      >
         {(isSubmitting || loading) && (
-          <Spinner
-            animation="border"
-            size="sm"
-            className="me-2"
-          />
+          <Spinner animation="border" size="sm" className="me-2" />
         )}
-        {eventId ? 'Save Changes' : 'Create Event'}
+        {eventId ? "Save Changes" : "Create Event"}
       </Button>
     </Form>
   );

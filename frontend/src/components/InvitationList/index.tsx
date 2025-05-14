@@ -21,8 +21,8 @@ export function InvitationList() {
 
       refreshInvitations();
     } catch (error) {
-      // TODO: Handle error
       console.error("Error accepting invitation", error);
+      alert("Failed to accept invitation. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -35,8 +35,8 @@ export function InvitationList() {
 
       refreshInvitations();
     } catch (error) {
-      // TODO: Handle error
       console.error("Error accepting invitation", error);
+      alert("Failed to decline invitation. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -45,30 +45,38 @@ export function InvitationList() {
   return (
     <>
       <ListGroup className="mt-3">
-        {invitations.map(invite => (
-          <ListGroup.Item key={invite.id} className="d-flex justify-content-between align-items-center">
+        {invitations.map((invite) => (
+          <ListGroup.Item
+            key={invite.id}
+            className="d-flex justify-content-between align-items-center"
+          >
             <div>
               <strong>{invite.event.title}</strong>
-              <div className="text-muted small">{formatDate(invite.event.start_time)} - {invite.event.location}</div>
+              <div className="text-muted small">
+                {formatDate(invite.event.start_time)} - {invite.event.location}
+              </div>
             </div>
             <div>
-              <Button variant="success" disabled={isActionLoading} size="sm" className="me-2" onClick={() => onAccept(invite.id)}>
+              <Button
+                variant="success"
+                disabled={isActionLoading}
+                size="sm"
+                className="me-2"
+                onClick={() => onAccept(invite.id)}
+              >
                 {(isActionLoading || loading) && (
-                  <Spinner
-                    animation="border"
-                    size="sm"
-                    className="me-2"
-                  />
+                  <Spinner animation="border" size="sm" className="me-2" />
                 )}
                 Accept
               </Button>
-              <Button variant="outline-danger" disabled={isActionLoading} size="sm" onClick={() => onDecline(invite.id)}>
+              <Button
+                variant="outline-danger"
+                disabled={isActionLoading}
+                size="sm"
+                onClick={() => onDecline(invite.id)}
+              >
                 {(isActionLoading || loading) && (
-                  <Spinner
-                    animation="border"
-                    size="sm"
-                    className="me-2"
-                  />
+                  <Spinner animation="border" size="sm" className="me-2" />
                 )}
                 Decline
               </Button>
