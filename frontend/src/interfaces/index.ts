@@ -4,6 +4,7 @@ export interface Group {
 }
 
 export interface User {
+  id: number;
   email: string
   name?: string
   surname?: string
@@ -25,6 +26,7 @@ export interface Event {
   location: string;
   start_time: string;
   end_time: string;
+  created_by: number;
 }
 
 export interface EventFormData {

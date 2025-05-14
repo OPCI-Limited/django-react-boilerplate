@@ -1,31 +1,43 @@
-import { Button, Card, Container } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { Button, Card, Container } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
-import { useState } from 'react';
-import { useDeleteEvent } from '../../hooks/events/useDeleteEvent';
-import { useEventById } from '../../hooks/events/useEvent';
-import { useEventAttendees } from '../../hooks/events/useEventAttendees';
-import { useCreateInvitation } from '../../hooks/invitations/useCreateInvitation';
-import { InvitationStatus } from '../../interfaces';
-import { formatDate } from '../../utils/formatDate';
-import { AttendeeList } from '../AttendeeList';
-import { DeleteConfirmationModal } from '../DeleteConfirmationModal';
-import { InviteUsersModal } from '../InviteUsersModal';
+import { useState } from "react";
+import { useDeleteEvent } from "../../hooks/events/useDeleteEvent";
+import { useEventById } from "../../hooks/events/useEvent";
+import { useEventAttendees } from "../../hooks/events/useEventAttendees";
+import { useCreateInvitation } from "../../hooks/invitations/useCreateInvitation";
+import { useAuth } from "../../hooks/useAuth";
+import { InvitationStatus } from "../../interfaces";
+import { formatDate } from "../../utils/formatDate";
+import { AttendeeList } from "../AttendeeList";
+import { DeleteConfirmationModal } from "../DeleteConfirmationModal";
+import { InviteUsersModal } from "../InviteUsersModal";
 
 export function EventDetail() {
   const { event, loading, error } = useEventById();
   const { deleteEvent, loading: deleting } = useDeleteEvent();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const navigate = useNavigate();
-  const { attendees, loading: attendeesLoading, error: attendeesError, refreshAttendees } = useEventAttendees(event?.id);
+  const {
+    attendees,
+    loading: attendeesLoading,
+    error: attendeesError,
+    refreshAttendees,
+  } = useEventAttendees(event?.id);
   const [showInviteUsersModal, setShowInviteUsersModal] = useState(false);
-  const { createInvitation, loading: creatingInvitation } = useCreateInvitation();
+  const { createInvitation, loading: creatingInvitation } =
+    useCreateInvitation();
+  const { user } = useAuth();
 
-  if (loading) return <p>Loading event...</p>
-  if (error || !event) return <p>Error loading event.</p>
+  if (loading) return <p>Loading event...</p>;
+  if (error || !event) return <p>Error loading event.</p>;
 
-  const acceptedAttendees = attendees.filter(a => a.status === InvitationStatus.ACCEPTED);
-  const pendingAttendees = attendees.filter(a => a.status === InvitationStatus.PENDING);
+  const acceptedAttendees = attendees.filter(
+    (a) => a.status === InvitationStatus.ACCEPTED
+  );
+  const pendingAttendees = attendees.filter(
+    (a) => a.status === InvitationStatus.PENDING
+  );
 
   const handleEdit = () => {
     navigate(`/events/${event.id}/edit`);
@@ -42,9 +54,9 @@ export function EventDetail() {
   const confirmDelete = async () => {
     try {
       await deleteEvent(event.id);
-      navigate('/events');
+      navigate("/events");
     } catch (err) {
-      console.error('Delete failed:', err);
+      console.error("Delete failed:", err);
     } finally {
       setShowDeleteModal(false);
     }
@@ -55,7 +67,7 @@ export function EventDetail() {
       await createInvitation(event.id, userId);
       refreshAttendees();
     } catch (error) {
-      alert('Failed to invite user');
+      alert("Failed to invite user");
     } finally {
       setShowInviteUsersModal(false);
     }
@@ -63,7 +75,7 @@ export function EventDetail() {
 
   return (
     <Container className="mt-4">
-      <Button variant="link" onClick={() => navigate('/events')}>
+      <Button variant="link" onClick={() => navigate("/events")}>
         &larr; Back to Events
       </Button>
 
@@ -79,11 +91,19 @@ export function EventDetail() {
           <h5>Location</h5>
           <p>{event.location}</p>
 
-          <div className="d-flex gap-2 mt-4">
-            <Button variant="primary" onClick={handleEdit}>Edit</Button>
-            <Button variant="danger" onClick={handleDelete}>Delete</Button>
-            <Button variant="secondary" onClick={handleInviteUsers}>Invite users</Button>
-          </div>
+          {user.id === event.created_by && (
+            <div className="d-flex gap-2 mt-4">
+              <Button variant="primary" onClick={handleEdit}>
+                Edit
+              </Button>
+              <Button variant="danger" onClick={handleDelete}>
+                Delete
+              </Button>
+              <Button variant="secondary" onClick={handleInviteUsers}>
+                Invite users
+              </Button>
+            </div>
+          )}
         </Card.Body>
       </Card>
 

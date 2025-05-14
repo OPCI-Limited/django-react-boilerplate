@@ -15,7 +15,6 @@ const useInvitations = () => {
     api
       .get<EventResponse>("/invitations")
       .then((res) => {
-        console.log('Fetched invitations:', res.data);
         setInvitations(res.data.results);
       })
       .catch((err) => setError(err))

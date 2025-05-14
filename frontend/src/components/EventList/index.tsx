@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useDeleteEvent } from "../../hooks/events/useDeleteEvent";
 import useEvents from "../../hooks/events/useEvents";
+import { useAuth } from "../../hooks/useAuth";
 import { formatDate } from "../../utils/formatDate";
 import { CanAccess } from "../CanAccess";
 import { DeleteConfirmationModal } from "../DeleteConfirmationModal";
@@ -15,6 +16,7 @@ export function EventsList() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<number | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   if (loading) return <p>Loading events...</p>;
   if (error) return <p>Error loading events.</p>;
@@ -77,26 +79,30 @@ export function EventsList() {
               <td>{event.title}</td>
               <td>{formatDate(event.start_time)}</td>
               <td onClick={(e) => e.stopPropagation()}>
-                <CanAccess permissions={["events.change_event"]}>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={(e) => handleEdit(e, event.id)}
-                    className="me-2"
-                  >
-                    Edit
-                  </Button>
-                </CanAccess>
+                {user.id === event.created_by && (
+                  <CanAccess permissions={["events.change_event"]}>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={(e) => handleEdit(e, event.id)}
+                      className="me-2"
+                    >
+                      Edit
+                    </Button>
+                  </CanAccess>
+                )}
 
-                <CanAccess permissions={["events.delete_event"]}>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={(e) => handleDelete(e, event.id)}
-                  >
-                    Delete
-                  </Button>
-                </CanAccess>
+                {user.id === event.created_by && (
+                  <CanAccess permissions={["events.delete_event"]}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={(e) => handleDelete(e, event.id)}
+                    >
+                      Delete
+                    </Button>
+                  </CanAccess>
+                )}
               </td>
             </tr>
           ))}

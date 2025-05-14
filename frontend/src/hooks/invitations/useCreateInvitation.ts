@@ -16,7 +16,6 @@ export function useCreateInvitation() {
         invitee: userId,
         status: InvitationStatus.PENDING,
       });
-      console.log(`Invitation sent to user ${userId} for event ${eventId}`);
     } catch (err) {
       const error = err as Error;
       setError(error);
