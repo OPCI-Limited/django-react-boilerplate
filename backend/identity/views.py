@@ -9,10 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import User
-from .serializers import (
-    RegistrationSerializer,
-    UserSerializer,
-)
+from .serializers import (ReadOnlyUserSerializer, RegistrationSerializer,
+                          UserSerializer)
 
 
 class RegistrationAPIView(APIView):
@@ -52,3 +50,11 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ReadOnlyUserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows viewing all users (read-only).
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = ReadOnlyUserSerializer
+    permission_classes = [IsAuthenticated]

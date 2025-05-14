@@ -1,4 +1,4 @@
-import React from 'react';
+import { Container } from 'react-bootstrap';
 import { BrowserRouter } from 'react-router-dom';
 
 import { NavBar } from './components/NavBar';
@@ -16,7 +16,9 @@ const App = () => (
   <BrowserRouter>
     <AuthProvider>
       <NavBar/>
-      <RouteList/>
+      <Container>
+        <RouteList/>
+      </Container>
     </AuthProvider>
   </BrowserRouter>
 );

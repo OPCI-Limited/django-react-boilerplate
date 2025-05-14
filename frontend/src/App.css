@@ -1,0 +1,11 @@
+.clickable-row {
+  cursor: pointer;
+}
+
+.event-card {
+  transition: background-color 0.2s ease;
+}
+
+.event-card:hover {
+  background-color: #f8f9fa;
+}

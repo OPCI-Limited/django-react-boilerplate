@@ -5,17 +5,20 @@
  * Upgrading from v5
  * https://reactrouter.com/docs/en/v6/upgrading/v5
  */
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { Home } from '../pages/Home';
-import { Login } from '../pages/Login';
-import { Metrics } from '../pages/Metrics';
-import { Register } from '../pages/Register';
-import { Users } from '../pages/Users';
-import { Profile } from '../pages/Profile';
-import { PrivateRoute } from './PrivateRoute';
-import { PublicRoute } from './PublicRoute';
+import { CreateEvent } from "../pages/CreateEvent";
+import { EditEvent } from "../pages/EditEvent";
+import { Event } from "../pages/Event";
+import { Events } from "../pages/Events";
+import { Invitations } from "../pages/Invitations";
+import { Login } from "../pages/Login";
+import { Metrics } from "../pages/Metrics";
+import { Profile } from "../pages/Profile";
+import { Register } from "../pages/Register";
+import { Users } from "../pages/Users";
+import { PrivateRoute } from "./PrivateRoute";
+import { PublicRoute } from "./PublicRoute";
 
 export const RouteList = () => (
   <>
@@ -24,7 +27,7 @@ export const RouteList = () => (
         path="/"
         element={
           <PrivateRoute redirectTo="/login">
-            <Home/>
+            <Navigate to="/events" replace />
           </PrivateRoute>
         }
       />
@@ -33,16 +36,19 @@ export const RouteList = () => (
         path="/login"
         element={
           <PublicRoute>
-            <Login/>
+            <Login />
           </PublicRoute>
         }
       />
 
-      <Route path="/register" element={
-        <PublicRoute>
-          <Register/>
-        </PublicRoute>
-      }/>
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        }
+      />
 
       <Route
         path={"/profile"}
@@ -56,8 +62,8 @@ export const RouteList = () => (
       <Route
         path="/metrics"
         element={
-          <PrivateRoute permissions={['metrics.list']} redirectTo="/login">
-            <Metrics/>
+          <PrivateRoute permissions={["metrics.list"]} redirectTo="/login">
+            <Metrics />
           </PrivateRoute>
         }
       />
@@ -65,8 +71,8 @@ export const RouteList = () => (
       <Route
         path="/users"
         element={
-          <PrivateRoute permissions={['users.list', 'users.create']}>
-            <Users/>
+          <PrivateRoute permissions={["users.list", "users.create"]}>
+            <Users />
           </PrivateRoute>
         }
       />
@@ -74,13 +80,58 @@ export const RouteList = () => (
       <Route
         path="/users/:id"
         element={
-          <PrivateRoute permissions={['users.list', 'users.create']}>
-            <Users/>
+          <PrivateRoute permissions={["users.list", "users.create"]}>
+            <Users />
           </PrivateRoute>
         }
       />
 
-      <Route path="*" element={<h1>404</h1>}/>
+      <Route
+        path="/events"
+        element={
+          <PrivateRoute permissions={["events.view_event"]}>
+            <Events />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events/:id"
+        element={
+          <PrivateRoute permissions={["events.view_event"]}>
+            <Event />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events/create"
+        element={
+          <PrivateRoute permissions={["events.add_event"]}>
+            <CreateEvent />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/events/:id/edit"
+        element={
+          <PrivateRoute permissions={["events.change_event"]}>
+            <EditEvent />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/invitations"
+        element={
+          <PrivateRoute permissions={["events.view_event"]}>
+            <Invitations />
+          </PrivateRoute>
+        }
+      />
+
+      <Route path="*" element={<h1>404</h1>} />
     </Routes>
   </>
 );

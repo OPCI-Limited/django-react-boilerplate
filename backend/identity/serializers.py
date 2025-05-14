@@ -39,3 +39,9 @@ class UserSerializer(serializers.ModelSerializer[User]):
 
     def get_permissions(self, obj):
         return list(obj.get_group_permissions())
+
+
+class ReadOnlyUserSerializer(serializers.ModelSerializer[User]):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name']
