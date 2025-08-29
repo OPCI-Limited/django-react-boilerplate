@@ -18,7 +18,7 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from identity.views import RegistrationAPIView, UserRetrieveUpdateAPIView
+from identity.views import RegistrationAPIView, UserRetrieveUpdateAPIView, LogoutAPIView
 from system.views import health_check
 
 router = routers.DefaultRouter()
@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/login/', TokenObtainPairView.as_view(), name='login'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='refresh'),
+    path('api/logout/', LogoutAPIView.as_view(), name='logout'),
     path('api/register/', RegistrationAPIView.as_view(), name='register'),
     path('api/user/', UserRetrieveUpdateAPIView.as_view(), name='user'),
     path('api/health/', health_check, name='health_check'),

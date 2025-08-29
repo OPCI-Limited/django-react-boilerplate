@@ -25,9 +25,10 @@ function handleRefreshToken(refreshToken: string) {
   api.post('/token/refresh/', { refresh: refreshToken })
     .then(response => {
       const access = (response.data as any).access;
+      const newRefresh = (response.data as any).refresh || refreshToken;
 
-      // SimpleJWT default doesn't rotate refresh tokens; keep existing refresh
-      createTokenCookies(access, refreshToken);
+      // Save rotated refresh if provided, otherwise keep current one
+      createTokenCookies(access, newRefresh);
       setAuthorizationHeader(api.defaults, access);
 
       failedRequestQueue.forEach(request => request.onSuccess(access));

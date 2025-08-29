@@ -7,7 +7,7 @@ services:
     build: ./backend
     stdin_open: true
     tty: true
-    command: bash -c 'while !</dev/tcp/postgres/5432; do sleep 1; done; python manage.py runserver 0.0.0.0:8001'
+    command: bash -c 'while !</dev/tcp/postgres/5432; do sleep 1; done; python manage.py migrate && python manage.py runserver 0.0.0.0:8001'
     env_file:
       - env.db
       - env.azure
