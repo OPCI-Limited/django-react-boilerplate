@@ -9,6 +9,8 @@ from identity.models import LoginEvent
 from django.contrib.auth import get_user_model
 from django.contrib import admin as dj_admin
 from django.test import RequestFactory
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.contrib.messages.storage.fallback import FallbackStorage
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 
@@ -214,6 +216,12 @@ class AdminLogoutAllTests(APITestCase):
         rf = RequestFactory()
         request = rf.post('/admin/identity/user/')
         request.user = self.admin
+
+        # Attach session and messages to support message_user in admin action
+        session_mw = SessionMiddleware(lambda r: None)
+        session_mw.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
 
         queryset = get_user_model().objects.filter(id=self.user.id)
         modeladmin.logout_all_sessions(request, queryset)

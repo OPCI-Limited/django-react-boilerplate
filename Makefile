@@ -64,4 +64,5 @@ test-backend: ## Run Django tests
 	$(DC) exec backend python manage.py test
 
 test-frontend: ## Run frontend tests (vitest)
-	$(DC) exec frontend npm run test --silent -- --run || true
+	# The test script already includes --run; don't pass it twice
+	$(DC) exec frontend npm run test --silent || true

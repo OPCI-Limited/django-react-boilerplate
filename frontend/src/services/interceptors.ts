@@ -15,6 +15,7 @@ let isRefreshing = false;
 let failedRequestQueue: IFailedRequestQueue[] = [];
 
 export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig | any, token: string) {
+  if (!request.headers) request.headers = {};
   request.headers.Authorization = `Bearer ${token}`;
 }
 

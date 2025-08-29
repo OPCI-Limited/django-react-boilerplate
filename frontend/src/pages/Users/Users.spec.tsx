@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { mocked } from 'ts-jest/utils'
 
 import { Users } from '.'
 import { api } from '../../services/api'
@@ -8,7 +7,7 @@ jest.mock('../../services/api')
 
 describe('Users page component', () => {
   it('should render list of users', async () => {
-    const getUsersMocked = mocked(api.get)
+    const getUsersMocked = vi.spyOn(api, 'get')
     const responseMock = {
       data: {
         users: [
@@ -33,7 +32,7 @@ describe('Users page component', () => {
   })
 
   it('should render empty list message when request not return payload', async () => {
-    const getUsersMocked = mocked(api.get)
+    const getUsersMocked = vi.spyOn(api, 'get')
 
     getUsersMocked.mockReturnValueOnce({ data: {} } as any)
 
@@ -47,7 +46,7 @@ describe('Users page component', () => {
   })
 
   it('should ', async () => {
-    const getUsersMocked = mocked(api.get)
+    const getUsersMocked = vi.spyOn(api, 'get')
 
     getUsersMocked.mockRejectedValueOnce({})
 

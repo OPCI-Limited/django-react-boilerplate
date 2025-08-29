@@ -1,11 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useContext } from 'react'
-import { mocked } from 'ts-jest/utils'
 
 import { AuthProvider, AuthContext } from '.'
 import { api } from '../../services/api'
-
-jest.mock('../../services/api')
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => jest.fn(),
@@ -41,7 +38,7 @@ function SampleComponent () {
 
 describe('AuthProvider', () => {
   it('should dispatch signIn function when invoked and return valid response', async () => {
-    const signInMocked = mocked(api.post)
+    const signInMocked = vi.spyOn(api, 'post')
     const responseMock = {
       data: {
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
@@ -69,7 +66,7 @@ describe('AuthProvider', () => {
   })
 
   it('should dispatch signIn function when invoked and return invalid response', async () => {
-    const signInMocked = mocked(api.post)
+    const signInMocked = vi.spyOn(api, 'post')
 
     signInMocked.mockRejectedValueOnce({})
 
@@ -88,7 +85,8 @@ describe('AuthProvider', () => {
   })
 
   it('should return valid paylod on make `/me`', async () => {
-    const signInMocked = mocked(api.get)
+    const signInMocked = vi.spyOn(api, 'get')
+    document.cookie = 'reactauth.token=access123; path=/'
     const responseMock = {
       data: {
         email: 'admin@site.com',
@@ -112,7 +110,8 @@ describe('AuthProvider', () => {
   })
 
   it('should return erro when `/me` request is invalid', async () => {
-    const signInMocked = mocked(api.get)
+    const signInMocked = vi.spyOn(api, 'get')
+    document.cookie = 'reactauth.token=access123; path=/'
 
     signInMocked.mockRejectedValueOnce({})
 
