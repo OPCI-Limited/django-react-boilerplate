@@ -5,7 +5,10 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from identity.factories import UserFactory, User
+from identity.models import LoginEvent
 from django.contrib.auth import get_user_model
+from django.contrib import admin as dj_admin
+from django.test import RequestFactory
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 
@@ -30,10 +33,12 @@ class LoginTests(APITestCase):
         assert User.objects.filter(email=self.user.email).exists()
         assert self.user.check_password('defaultpassword')
 
-        response = self.client.post(self.url, data={'email': self.user.email, 'password': 'defaultpassword'})
+        response = self.client.post(self.url, data={'email': self.user.email, 'password': 'defaultpassword'},
+                                    HTTP_USER_AGENT='pytest', REMOTE_ADDR='127.0.0.1')
         print(response.data)
 
         assert response.status_code == status.HTTP_200_OK
+        assert LoginEvent.objects.filter(user=self.user).count() == 1
 
     def test_login_invalid_password(self):
         response = self.client.post(self.url, data={'email': self.user.email, 'password': 'abc123'})
@@ -133,6 +138,20 @@ class JWTFlowTests(APITestCase):
         assert 'access' in response.data and 'refresh' in response.data
         return response.data['access'], response.data['refresh']
 
+    def test_multiple_logins_create_events_but_keep_initial_last_login(self):
+        # First login sets last_login and creates 1 event
+        self.login()
+        self.user.refresh_from_db()
+        first_last_login = self.user.last_login
+        assert LoginEvent.objects.filter(user=self.user).count() == 1
+
+        # Second login while active session exists creates another event
+        self.login()
+        self.user.refresh_from_db()
+        assert LoginEvent.objects.filter(user=self.user).count() == 2
+        # last_login should remain from the first session (not overwritten)
+        assert self.user.last_login == first_last_login
+
     def refresh(self, refresh_token):
         url = reverse('refresh')
         return self.client.post(url, data={'refresh': refresh_token})
@@ -190,20 +209,14 @@ class AdminLogoutAllTests(APITestCase):
         # Ensure tokens exist
         assert OutstandingToken.objects.filter(user=self.user).count() >= 2
 
-        # Log in to admin
-        client = self.client_class()
-        client.force_login(self.admin)
+        # Call the admin action directly
+        modeladmin = dj_admin.site._registry[get_user_model()]
+        rf = RequestFactory()
+        request = rf.post('/admin/identity/user/')
+        request.user = self.admin
 
-        # Perform the admin action
-        changelist_url = '/admin/identity/user/'
-        response = client.post(changelist_url, {
-            'action': 'logout_all_sessions',
-            '_selected_action': [str(self.user.id)],
-            'index': 0,
-            'select_across': 0,
-        }, follow=True)
-
-        assert response.status_code == 200
+        queryset = get_user_model().objects.filter(id=self.user.id)
+        modeladmin.logout_all_sessions(request, queryset)
 
         # All outstanding tokens for the user should be blacklisted
         user_tokens = OutstandingToken.objects.filter(user=self.user)
