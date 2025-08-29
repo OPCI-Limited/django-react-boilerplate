@@ -3,7 +3,8 @@ DC ?= docker compose
 
 .PHONY: help up up-build down down-v restart ps logs backend-logs frontend-logs \
 	backend-shell frontend-shell migrate makemigrations superuser createsuperuser test test-backend test-frontend \
-	build-backend build-frontend lint lint-backend lint-frontend lint-frontend-fix
+	build-backend build-frontend lint lint-backend lint-frontend lint-frontend-fix \
+	coverage coverage-backend coverage-frontend
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
@@ -66,6 +67,14 @@ test-backend: ## Run Django tests
 test-frontend: ## Run frontend tests (vitest)
 	# The test script already includes --run; don't pass it twice
 	$(DC) exec frontend npm run test --silent || true
+
+coverage: coverage-backend coverage-frontend ## Run coverage for backend and frontend
+
+coverage-backend: ## Backend coverage (HTML + XML reports)
+	$(DC) exec backend bash -lc "coverage erase && coverage run --rcfile=.coveragerc manage.py test && coverage report -m && coverage xml"
+
+coverage-frontend: ## Frontend coverage (Vitest)
+	$(DC) exec frontend npm run test:coverage --silent || true
 
 lint: lint-backend lint-frontend ## Run all linters (backend + frontend)
 

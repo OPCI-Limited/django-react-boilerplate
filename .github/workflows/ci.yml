@@ -59,7 +59,7 @@ jobs:
       - name: Lint (flake8)
         working-directory: backend
         run: flake8
-      - name: Tests
+      - name: Tests with coverage
         working-directory: backend
         env:
           POSTGRES_DB: django_db
@@ -67,7 +67,23 @@ jobs:
           POSTGRES_PASSWORD: postgres_password
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
-        run: python manage.py test --noinput
+        run: |
+          coverage run --rcfile=.coveragerc manage.py test --noinput
+          coverage report -m
+          coverage xml
+          coverage html
+      - name: Upload backend coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-html
+          path: backend/htmlcov/
+          retention-days: 7
+      - name: Upload backend coverage XML
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-xml
+          path: backend/coverage.xml
+          retention-days: 7
 
   frontend:
     name: Frontend (Vite + Vitest + ESLint)
@@ -82,10 +98,19 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm install
       - name: Lint
         working-directory: frontend
         run: npm run lint
       - name: Tests
         working-directory: frontend
-        run: npm run test
+        run: npx vitest run
+      - name: Coverage (Vitest)
+        working-directory: frontend
+        run: npm run test:coverage
+      - name: Upload frontend coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-html
+          path: frontend/coverage/
+          retention-days: 7
