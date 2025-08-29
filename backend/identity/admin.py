@@ -36,7 +36,7 @@ class CustomUserAdmin(BaseUserAdmin):
     # Fields to display in the list view
     list_display = (
         'email', 'first_name', 'last_name', 'is_active',
-        'last_login', 'active_tokens', 'last_token_issued', 'session_age',
+        'last_login', 'has_active_session', 'active_tokens', 'last_token_issued', 'session_age',
         'logins_7d', 'logins_30d'
     )
 
@@ -68,9 +68,12 @@ class CustomUserAdmin(BaseUserAdmin):
 
     def _active_tokens_qs(self, user):
         now = timezone.now()
-        tokens = OutstandingToken.objects.filter(user=user, expires_at__gt=now)
-        tokens = tokens.exclude(id__in=BlacklistedToken.objects.values('token'))
-        return tokens
+        # Active = not expired and not blacklisted
+        return OutstandingToken.objects.filter(
+            user=user,
+            expires_at__gt=now,
+            blacklistedtoken__isnull=True,
+        ).distinct()
 
     def active_tokens(self, obj):
         # Prefer annotated value to avoid N+1
@@ -78,7 +81,15 @@ class CustomUserAdmin(BaseUserAdmin):
         if val is not None:
             return val
         return self._active_tokens_qs(obj).count()
-    active_tokens.short_description = 'Active sessions'
+    active_tokens.short_description = 'Session count'
+
+    def has_active_session(self, obj):
+        val = getattr(obj, 'active_tokens', None)
+        if val is not None:
+            return val > 0
+        return self._active_tokens_qs(obj).exists()
+    has_active_session.boolean = True
+    has_active_session.short_description = 'Active session'
 
     def last_token_issued(self, obj):
         # Use annotated value when present
@@ -106,15 +117,18 @@ class CustomUserAdmin(BaseUserAdmin):
         - If user has active tokens: now - last_login.
         - Else: (last blacklist or expiry) - last_login.
         """
-        if not obj.last_login:
-            return '-'
-
         now = timezone.now()
         active = getattr(obj, 'active_tokens', None)
         has_active = (active is not None and active > 0) or self._active_tokens_qs(obj).exists()
 
         if has_active:
-            delta = now - obj.last_login
+            # If last_login is missing (e.g., legacy tokens), fall back to earliest active token creation
+            start = obj.last_login
+            if not start:
+                start = self._active_tokens_qs(obj).order_by('created_at').values_list('created_at', flat=True).first()
+                if not start:
+                    return '-'
+            delta = now - start
             return self._format_delta(delta)
 
         # No active sessions: show duration for most recent ended session
@@ -132,8 +146,18 @@ class CustomUserAdmin(BaseUserAdmin):
                 .aggregate(max_dt=Max('expires_at'))['max_dt']
             )
             end = last_blacklisted or last_expired
-        if end and end > obj.last_login:
-            return self._format_delta(end - obj.last_login)
+        # If last_login missing, try to infer start from earliest token
+        start = obj.last_login
+        if not start:
+            start = (
+                OutstandingToken.objects
+                .filter(user=obj)
+                .order_by('created_at')
+                .values_list('created_at', flat=True)
+                .first()
+            )
+        if end and start and end > start:
+            return self._format_delta(end - start)
         return '-'
     session_age.short_description = 'Session age'
 

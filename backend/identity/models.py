@@ -14,6 +14,7 @@ class UserQuerySet(models.QuerySet):
             active_tokens=Count(
                 'outstandingtoken',
                 filter=(Q(outstandingtoken__expires_at__gt=now) & Q(outstandingtoken__blacklistedtoken__isnull=True)),
+                distinct=True,
             )
         )
 
@@ -23,8 +24,16 @@ class UserQuerySet(models.QuerySet):
     def with_login_counts(self):
         now = timezone.now()
         return self.annotate(
-            logins_7d=Count('login_events', filter=Q(login_events__created_at__gte=now - timezone.timedelta(days=7))),
-            logins_30d=Count('login_events', filter=Q(login_events__created_at__gte=now - timezone.timedelta(days=30))),
+            logins_7d=Count(
+                'login_events',
+                filter=Q(login_events__created_at__gte=now - timezone.timedelta(days=7)),
+                distinct=True,
+            ),
+            logins_30d=Count(
+                'login_events',
+                filter=Q(login_events__created_at__gte=now - timezone.timedelta(days=30)),
+                distinct=True,
+            ),
         )
 
     def with_session_ends(self):

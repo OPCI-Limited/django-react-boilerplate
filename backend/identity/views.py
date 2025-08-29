@@ -53,6 +53,14 @@ class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
         serializer = self.serializer_class(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def update(self, request: Request, *args: dict[str, Any], **kwargs: dict[str, Any]) -> Response:
+        """Return updated user."""
+        serializer = self.serializer_class(self.get_object(), data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class LogoutAPIView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -89,8 +97,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         response = Response(serializer.validated_data, status=status.HTTP_200_OK)
 
-        # Only set last_login if there was no active session already
-        if not pre_existing_active:
+        # Only set last_login if there was no active session already, or if it's not set yet
+        if not pre_existing_active or not user.last_login:
             user.last_login = now
             user.save(update_fields=['last_login'])
 
@@ -105,11 +113,3 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             pass
 
         return response
-
-    def update(self, request: Request, *args: dict[str, Any], **kwargs: dict[str, Any]) -> Response:
-        """Return updated user."""
-        serializer = self.serializer_class(self.get_object(), data=request.data, partial=True, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
