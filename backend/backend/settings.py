@@ -117,7 +117,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Display timezone (DB remains UTC when USE_TZ=True)
+# Set to your local zone for admin/UI display without changing stored times.
+TIME_ZONE = 'Europe/Stockholm'
 
 USE_I18N = True
 

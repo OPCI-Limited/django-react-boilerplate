@@ -137,6 +137,23 @@ class CustomUserAdmin(BaseUserAdmin):
         return '-'
     session_age.short_description = 'Session age'
 
+    # Admin action: blacklist all outstanding tokens for selected users
+    def logout_all_sessions(self, request, queryset):
+        total_blacklisted = 0
+        for user in queryset:
+            tokens = OutstandingToken.objects.filter(user=user)
+            for token in tokens:
+                _, created = BlacklistedToken.objects.get_or_create(token=token)
+                if created:
+                    total_blacklisted += 1
+
+        self.message_user(
+            request,
+            f"Blacklisted {total_blacklisted} outstanding refresh token(s) for selected user(s).",
+            level=messages.SUCCESS,
+        )
+    logout_all_sessions.short_description = "Logout all sessions (blacklist refresh tokens)"
+
     def logins_7d(self, obj):
         val = getattr(obj, 'logins_7d', None)
         if val is not None:
@@ -161,22 +178,6 @@ class LoginEventAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'ip', 'user_agent')
     date_hierarchy = 'created_at'
     readonly_fields = ('user', 'created_at', 'ip', 'user_agent')
-
-    def logout_all_sessions(self, request, queryset):
-        total_blacklisted = 0
-        for user in queryset:
-            tokens = OutstandingToken.objects.filter(user=user)
-            for token in tokens:
-                _, created = BlacklistedToken.objects.get_or_create(token=token)
-                if created:
-                    total_blacklisted += 1
-
-        self.message_user(
-            request,
-            f"Blacklisted {total_blacklisted} outstanding refresh token(s) for selected user(s).",
-            level=messages.SUCCESS,
-        )
-    logout_all_sessions.short_description = "Logout all sessions (blacklist refresh tokens)"
 
 
 admin.site.register(User, CustomUserAdmin)
