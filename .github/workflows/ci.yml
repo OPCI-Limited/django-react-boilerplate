@@ -88,5 +88,4 @@ jobs:
         run: npm run lint
       - name: Tests
         working-directory: frontend
-        run: npm run test -- --run
-
+        run: npm run test
