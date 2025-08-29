@@ -1,6 +1,4 @@
-from typing import Any, Optional
-
-from django.views.decorators.csrf import csrf_exempt
+from typing import Any
 from rest_framework import status, viewsets
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -9,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from .models import LoginEvent

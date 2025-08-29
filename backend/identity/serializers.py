@@ -21,6 +21,7 @@ class RegistrationSerializer(serializers.ModelSerializer[User]):
         user.save()
         return user
 
+
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group

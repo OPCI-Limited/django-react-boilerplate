@@ -1,10 +1,9 @@
-from django.contrib.auth.base_user import BaseUserManager
-from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 from django.db.models import Q, Count, Max
 from django.utils import timezone
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
 
 class UserQuerySet(models.QuerySet):
@@ -48,9 +47,9 @@ class UserQuerySet(models.QuerySet):
         """Convenience method to annotate all common session/login metrics."""
         return (
             self.with_active_tokens()
-                .with_last_token_issued()
-                .with_login_counts()
-                .with_session_ends()
+            .with_last_token_issued()
+            .with_login_counts()
+            .with_session_ends()
         )
 
 
@@ -59,6 +58,7 @@ class CustomUserManager(BaseUserManager.from_queryset(UserQuerySet)):
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
+
     def create_user(self, email, password, **extra_fields):
         """
         Create and save a User with the given email and password.
@@ -88,6 +88,7 @@ class CustomUserManager(BaseUserManager.from_queryset(UserQuerySet)):
 
 class LowerCaseEmailField(models.EmailField):
     """ Robust way to ensure emails are always stored as lowercase """
+
     def get_prep_value(self, value):
         value = super(LowerCaseEmailField, self).get_prep_value(value)
         if value is not None:

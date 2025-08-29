@@ -1,8 +1,6 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 from django.db.models import Max
-from django.db.models.functions import Coalesce
-from django.db.models import F
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from django.contrib.auth.forms import UserChangeForm

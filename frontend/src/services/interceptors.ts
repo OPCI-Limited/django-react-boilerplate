@@ -14,9 +14,10 @@ interface IFailedRequestQueue {
 let isRefreshing = false;
 let failedRequestQueue: IFailedRequestQueue[] = [];
 
-export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig | any, token: string) {
-  if (!request.headers) request.headers = {};
-  request.headers.Authorization = `Bearer ${token}`;
+export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig, token: string) {
+  const req = request as AxiosRequestConfig & AxiosDefaults & { headers?: Record<string, unknown> };
+  if (!req.headers) req.headers = {};
+  (req.headers as Record<string, string>).Authorization = `Bearer ${token}`;
 }
 
 function handleRefreshToken(refreshToken: string) {
@@ -25,8 +26,10 @@ function handleRefreshToken(refreshToken: string) {
   // DRF SimpleJWT refresh endpoint
   api.post('/token/refresh/', { refresh: refreshToken })
     .then(response => {
-      const access = (response.data as any).access;
-      const newRefresh = (response.data as any).refresh || refreshToken;
+      type RefreshResponse = { access?: string; refresh?: string };
+      const data = response.data as RefreshResponse;
+      const access = data.access || '';
+      const newRefresh = data.refresh || refreshToken;
 
       // Save rotated refresh if provided, otherwise keep current one
       createTokenCookies(access, newRefresh);

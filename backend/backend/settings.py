@@ -234,9 +234,7 @@ if USE_AZURE_STORAGE:
     }
 
     # Set the static URL to point to the Azure Blob Storage
-    STATIC_URL = f"https://{os.getenv('AZURE_ACCOUNT_NAME')}.blob.core.windows.net/{os.getenv('AZURE_STATIC_CONTAINER')}/"
-
-
-
-print('USE_AZURE_STATIC_STORAGE', USE_AZURE_STORAGE)
-print('STORAGES', STORAGES)
+    STATIC_URL = (
+        f"https://{os.getenv('AZURE_ACCOUNT_NAME')}.blob.core.windows.net/"
+        f"{os.getenv('AZURE_STATIC_CONTAINER')}/"
+    )

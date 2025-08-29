@@ -3,7 +3,7 @@ DC ?= docker compose
 
 .PHONY: help up up-build down down-v restart ps logs backend-logs frontend-logs \
 	backend-shell frontend-shell migrate makemigrations superuser createsuperuser test test-backend test-frontend \
-	build-backend build-frontend
+	build-backend build-frontend lint lint-backend lint-frontend lint-frontend-fix
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
@@ -66,3 +66,14 @@ test-backend: ## Run Django tests
 test-frontend: ## Run frontend tests (vitest)
 	# The test script already includes --run; don't pass it twice
 	$(DC) exec frontend npm run test --silent || true
+
+lint: lint-backend lint-frontend ## Run all linters (backend + frontend)
+
+lint-backend: ## Run flake8 on backend
+	$(DC) exec backend flake8
+
+lint-frontend: ## Run ESLint on frontend
+	$(DC) exec frontend npm run lint --silent || true
+
+lint-frontend-fix: ## Run ESLint with --fix on frontend
+	$(DC) exec frontend npm run lint:fix --silent || true
