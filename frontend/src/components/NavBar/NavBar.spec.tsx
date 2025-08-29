@@ -59,6 +59,9 @@ describe('NavBar component', () => {
       </BrowserRouter>
     )
 
+    // Open dropdown first to render its items
+    fireEvent.click(screen.getByText(/email@site\.com/))
+
     const $logoutButton = screen.getByTestId('logout-button')
 
     fireEvent.click($logoutButton)

@@ -5,15 +5,12 @@ import faker
 
 from django.contrib.auth import get_user_model
 from factory.django import DjangoModelFactory
-from django.contrib.auth.hashers import make_password
 
 User = get_user_model()
 FAKE = faker.Faker()
 
 
 class UserFactory(DjangoModelFactory):
-
-
     class Meta:
         model = User
         django_get_or_create = ("email",)

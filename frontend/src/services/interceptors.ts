@@ -14,21 +14,28 @@ interface IFailedRequestQueue {
 let isRefreshing = false;
 let failedRequestQueue: IFailedRequestQueue[] = [];
 
-export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig | any, token: string) {
-  request.headers.Authorization = `Bearer ${token}`;
+export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConfig, token: string) {
+  const req = request as AxiosRequestConfig & AxiosDefaults & { headers?: Record<string, unknown> };
+  if (!req.headers) req.headers = {};
+  (req.headers as Record<string, string>).Authorization = `Bearer ${token}`;
 }
 
 function handleRefreshToken(refreshToken: string) {
   isRefreshing = true;
 
-  api.post('/refresh', { refreshToken })
+  // DRF SimpleJWT refresh endpoint
+  api.post('/token/refresh/', { refresh: refreshToken })
     .then(response => {
-      const { token } = response.data;
+      type RefreshResponse = { access?: string; refresh?: string };
+      const data = response.data as RefreshResponse;
+      const access = data.access || '';
+      const newRefresh = data.refresh || refreshToken;
 
-      createTokenCookies(token, response.data.refreshToken);
-      setAuthorizationHeader(api.defaults, token);
+      // Save rotated refresh if provided, otherwise keep current one
+      createTokenCookies(access, newRefresh);
+      setAuthorizationHeader(api.defaults, access);
 
-      failedRequestQueue.forEach(request => request.onSuccess(token));
+      failedRequestQueue.forEach(request => request.onSuccess(access));
       failedRequestQueue = [];
     })
     .catch(error => {
@@ -58,11 +65,15 @@ function onResponse(response: AxiosResponse): AxiosResponse {
 
 function onResponseError(error: AxiosError): Promise<AxiosError | AxiosResponse> {
   if (error?.response?.status === 401) {
-    if (error.response.data?.code === 'token.expired') {
-      const originalConfig = error.config;
-      const refreshToken = getRefreshToken();
+    const originalConfig = error.config;
+    const refreshToken = getRefreshToken();
 
-      !isRefreshing && handleRefreshToken(refreshToken);
+    // Avoid infinite loop on refresh/login endpoints
+    const url = (originalConfig?.url || '').toString();
+    const isAuthEndpoint = url.includes('/login/') || url.includes('/token/refresh/');
+
+    if (refreshToken && !isAuthEndpoint) {
+      if (!isRefreshing) handleRefreshToken(refreshToken);
 
       return new Promise((resolve, reject) => {
         failedRequestQueue.push({
@@ -70,14 +81,15 @@ function onResponseError(error: AxiosError): Promise<AxiosError | AxiosResponse>
             setAuthorizationHeader(originalConfig, token);
             resolve(api(originalConfig));
           },
-          onFailure: (error: AxiosError) => {
-            reject(error);
+          onFailure: (err: AxiosError) => {
+            reject(err);
           }
         });
       });
-    } else {
-      removeTokenCookies();
     }
+
+    // No refresh token or auth endpoint failed: clear session
+    removeTokenCookies();
   }
 
   return Promise.reject(error);

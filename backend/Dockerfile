@@ -1,5 +1,5 @@
 # start from an official image
-FROM python:3.10.6
+FROM python:3.12
 
 RUN mkdir -p /app/src/
 WORKDIR /app/src/

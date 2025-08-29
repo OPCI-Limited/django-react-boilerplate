@@ -1,13 +1,10 @@
-version: '3'
-
 services:
 
   backend:
     build: ./backend
-    container_name: boilerplate-backend
     stdin_open: true
     tty: true
-    command: bash -c 'while !</dev/tcp/postgres/5432; do sleep 1; done; python manage.py runserver 0.0.0.0:8001'
+    command: bash -c 'while !</dev/tcp/postgres/5432; do sleep 1; done; python manage.py migrate && python manage.py runserver 0.0.0.0:8001'
     env_file:
       - env.db
       - env.azure
@@ -21,11 +18,11 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: boilerplate-frontend
-    stdin_open: true
-    tty: true
+    command: sh -c "npm ci && npm run dev"
+#    stdin_open: true
+#    tty: true
     volumes:
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
       - ./frontend:/app
     depends_on:
       - backend
@@ -38,7 +35,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
     ports:
       - 8001:80
-      - 3000:8080
+      - 5173:8080
     depends_on:
       - backend
       - frontend
@@ -62,4 +59,4 @@ networks:
 
 volumes:
   postgres_volume:
-  frontend_volume:
+  frontend_node_modules:

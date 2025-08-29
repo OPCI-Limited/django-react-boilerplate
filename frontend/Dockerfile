@@ -1,14 +1,15 @@
-FROM node:16.13.0
+FROM node:22
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json /app
+ENV NODE_ENV=development
 
-RUN yarn install
+# Install dependencies (use lockfile when available)
+COPY package*.json ./
+RUN npm ci || npm install
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 5173
 
-CMD [ "yarn", "start" ]
+CMD [ "npm", "run", "dev" ]

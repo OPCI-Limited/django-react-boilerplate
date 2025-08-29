@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'django_extensions',
     'storages',
@@ -116,7 +117,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Display timezone (DB remains UTC when USE_TZ=True)
+# Set to your local zone for admin/UI display without changing stored times.
+TIME_ZONE = 'Europe/Stockholm'
 
 USE_I18N = True
 
@@ -201,9 +204,11 @@ AUTH_USER_MODEL = 'identity.User'
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-  }
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
 
 # Determine whether to use Azure storage for static files
 USE_AZURE_STORAGE = os.getenv('USE_AZURE_STORAGE', 'False') == 'True'
@@ -229,9 +234,7 @@ if USE_AZURE_STORAGE:
     }
 
     # Set the static URL to point to the Azure Blob Storage
-    STATIC_URL = f"https://{os.getenv('AZURE_ACCOUNT_NAME')}.blob.core.windows.net/{os.getenv('AZURE_STATIC_CONTAINER')}/"
-
-
-
-print('USE_AZURE_STATIC_STORAGE', USE_AZURE_STORAGE)
-print('STORAGES', STORAGES)
+    STATIC_URL = (
+        f"https://{os.getenv('AZURE_ACCOUNT_NAME')}.blob.core.windows.net/"
+        f"{os.getenv('AZURE_STATIC_CONTAINER')}/"
+    )

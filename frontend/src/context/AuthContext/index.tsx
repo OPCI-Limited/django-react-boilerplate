@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { api } from '../../services/api';
 import { setAuthorizationHeader } from '../../services/interceptors';
-import { createTokenCookies, getToken, removeTokenCookies } from '../../utils/tokenCookies';
+import { createTokenCookies, getToken, getRefreshToken, removeTokenCookies } from '../../utils/tokenCookies';
 import { User } from '../../interfaces';
 
 interface SignInCredentials {
@@ -90,7 +90,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  function signOut(pathname = '/login') {
+  async function signOut(pathname = '/login') {
+    try {
+      const refresh = getRefreshToken();
+      if (refresh) {
+        await api.post('/logout/', { refresh });
+      }
+    } catch (e) {
+      // Ignore logout API errors; proceed with client-side cleanup
+    }
+
     removeTokenCookies();
     setUser(null);
     setLoadingUserData(false);

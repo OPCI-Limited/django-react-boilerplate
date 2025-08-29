@@ -8,6 +8,6 @@ factory-boy ~=3.2.1
 django-filter ~=22.1
 coverage ~=6.4.4
 flake8 ~=5.0.4
-djangorestframework-simplejwt ~=5.2.0
+djangorestframework-simplejwt >=5.3.1,<6
 django-extensions ~=3.2.1
 django-storages[azure] ~=1.14.4

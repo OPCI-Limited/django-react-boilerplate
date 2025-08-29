@@ -5,6 +5,13 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from identity.factories import UserFactory, User
+from identity.models import LoginEvent
+from django.contrib.auth import get_user_model
+from django.contrib import admin as dj_admin
+from django.test import RequestFactory
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.contrib.messages.storage.fallback import FallbackStorage
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 
 class LoginTests(APITestCase):
@@ -28,10 +35,12 @@ class LoginTests(APITestCase):
         assert User.objects.filter(email=self.user.email).exists()
         assert self.user.check_password('defaultpassword')
 
-        response = self.client.post(self.url, data={'email': self.user.email, 'password': 'defaultpassword'})
+        response = self.client.post(self.url, data={'email': self.user.email, 'password': 'defaultpassword'},
+                                    HTTP_USER_AGENT='pytest', REMOTE_ADDR='127.0.0.1')
         print(response.data)
 
         assert response.status_code == status.HTTP_200_OK
+        assert LoginEvent.objects.filter(user=self.user).count() == 1
 
     def test_login_invalid_password(self):
         response = self.client.post(self.url, data={'email': self.user.email, 'password': 'abc123'})
@@ -117,3 +126,107 @@ class UserTests(AuthenticatedAPITestCase):
         self.user.refresh_from_db()
         assert self.user.first_name == 'James'
         assert self.user.last_name == 'Doe'
+
+
+class JWTFlowTests(APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory()
+
+    def login(self):
+        url = reverse('login')
+        response = self.client.post(url, data={'email': self.user.email, 'password': 'defaultpassword'})
+        assert response.status_code == status.HTTP_200_OK
+        assert 'access' in response.data and 'refresh' in response.data
+        return response.data['access'], response.data['refresh']
+
+    def test_multiple_logins_create_events_but_keep_initial_last_login(self):
+        # First login sets last_login and creates 1 event
+        self.login()
+        self.user.refresh_from_db()
+        first_last_login = self.user.last_login
+        assert LoginEvent.objects.filter(user=self.user).count() == 1
+
+        # Second login while active session exists creates another event
+        self.login()
+        self.user.refresh_from_db()
+        assert LoginEvent.objects.filter(user=self.user).count() == 2
+        # last_login should remain from the first session (not overwritten)
+        assert self.user.last_login == first_last_login
+
+    def refresh(self, refresh_token):
+        url = reverse('refresh')
+        return self.client.post(url, data={'refresh': refresh_token})
+
+    def logout(self, refresh_token):
+        url = reverse('logout')
+        # Authenticate with access token for logout endpoint
+        access, _ = self.login()
+        client = self.client_class(HTTP_AUTHORIZATION=f'Bearer {access}')
+        return client.post(url, data={'refresh': refresh_token})
+
+    def test_refresh_rotates_and_blacklists_old_token(self):
+        access, refresh = self.login()
+
+        # First refresh should succeed and return a new refresh token (rotation)
+        r1 = self.refresh(refresh)
+        assert r1.status_code == status.HTTP_200_OK
+        assert 'access' in r1.data
+        assert 'refresh' in r1.data
+        new_refresh = r1.data['refresh']
+
+        # Reusing old refresh should now fail (blacklisted)
+        r2 = self.refresh(refresh)
+        assert r2.status_code == status.HTTP_401_UNAUTHORIZED
+
+        # Using the rotated refresh should succeed
+        r3 = self.refresh(new_refresh)
+        assert r3.status_code == status.HTTP_200_OK
+
+    def test_logout_blacklists_refresh(self):
+        access, refresh = self.login()
+        # Call logout with the current refresh token
+        url = reverse('logout')
+        client = self.client_class(HTTP_AUTHORIZATION=f'Bearer {access}')
+        resp = client.post(url, data={'refresh': refresh})
+        assert resp.status_code == status.HTTP_205_RESET_CONTENT
+
+        # Attempting to refresh with that token should now fail
+        r = self.refresh(refresh)
+        assert r.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class AdminLogoutAllTests(APITestCase):
+    def setUp(self):
+        super().setUp()
+        User = get_user_model()
+        self.admin = User.objects.create_superuser(email='admin@example.com', password='adminpass')
+        self.user = UserFactory()
+
+        # Issue two refresh tokens so there are multiple OutstandingToken records
+        RefreshToken.for_user(self.user)
+        RefreshToken.for_user(self.user)
+
+    def test_admin_action_blacklists_all_tokens(self):
+        # Ensure tokens exist
+        assert OutstandingToken.objects.filter(user=self.user).count() >= 2
+
+        # Call the admin action directly
+        modeladmin = dj_admin.site._registry[get_user_model()]
+        rf = RequestFactory()
+        request = rf.post('/admin/identity/user/')
+        request.user = self.admin
+
+        # Attach session and messages to support message_user in admin action
+        session_mw = SessionMiddleware(lambda r: None)
+        session_mw.process_request(request)
+        request.session.save()
+        request._messages = FallbackStorage(request)
+
+        queryset = get_user_model().objects.filter(id=self.user.id)
+        modeladmin.logout_all_sessions(request, queryset)
+
+        # All outstanding tokens for the user should be blacklisted
+        user_tokens = OutstandingToken.objects.filter(user=self.user)
+        for t in user_tokens:
+            assert BlacklistedToken.objects.filter(token=t).exists()
