@@ -21,14 +21,16 @@ export function setAuthorizationHeader(request: AxiosDefaults | AxiosRequestConf
 function handleRefreshToken(refreshToken: string) {
   isRefreshing = true;
 
-  api.post('/refresh', { refreshToken })
+  // DRF SimpleJWT refresh endpoint
+  api.post('/token/refresh/', { refresh: refreshToken })
     .then(response => {
-      const { token } = response.data;
+      const access = (response.data as any).access;
 
-      createTokenCookies(token, response.data.refreshToken);
-      setAuthorizationHeader(api.defaults, token);
+      // SimpleJWT default doesn't rotate refresh tokens; keep existing refresh
+      createTokenCookies(access, refreshToken);
+      setAuthorizationHeader(api.defaults, access);
 
-      failedRequestQueue.forEach(request => request.onSuccess(token));
+      failedRequestQueue.forEach(request => request.onSuccess(access));
       failedRequestQueue = [];
     })
     .catch(error => {
@@ -58,11 +60,15 @@ function onResponse(response: AxiosResponse): AxiosResponse {
 
 function onResponseError(error: AxiosError): Promise<AxiosError | AxiosResponse> {
   if (error?.response?.status === 401) {
-    if (error.response.data?.code === 'token.expired') {
-      const originalConfig = error.config;
-      const refreshToken = getRefreshToken();
+    const originalConfig = error.config;
+    const refreshToken = getRefreshToken();
 
-      !isRefreshing && handleRefreshToken(refreshToken);
+    // Avoid infinite loop on refresh/login endpoints
+    const url = (originalConfig?.url || '').toString();
+    const isAuthEndpoint = url.includes('/login/') || url.includes('/token/refresh/');
+
+    if (refreshToken && !isAuthEndpoint) {
+      if (!isRefreshing) handleRefreshToken(refreshToken);
 
       return new Promise((resolve, reject) => {
         failedRequestQueue.push({
@@ -70,14 +76,15 @@ function onResponseError(error: AxiosError): Promise<AxiosError | AxiosResponse>
             setAuthorizationHeader(originalConfig, token);
             resolve(api(originalConfig));
           },
-          onFailure: (error: AxiosError) => {
-            reject(error);
+          onFailure: (err: AxiosError) => {
+            reject(err);
           }
         });
       });
-    } else {
-      removeTokenCookies();
     }
+
+    // No refresh token or auth endpoint failed: clear session
+    removeTokenCookies();
   }
 
   return Promise.reject(error);
